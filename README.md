@@ -1,4 +1,4 @@
-![Screenshot_2022-08-19-14-45-53-530_com suntend arktoolbox](https://user-images.githubusercontent.com/94435821/185559922-521e92ea-6ba3-4470-b568-751ef4ca2fc5.jpg)
+
 # draw_helper
 真寻bot插件 抽明日方舟助理 数据来自prts.wiki 
 #
@@ -8,4 +8,4 @@
 
 cd请自行设置,默认180秒
 #
-功能 抽助理 我的助理 查看助理所有立绘 切换立绘[num] 
+功能 抽助理 我的助理 查看助理所有立绘 切换立绘[num]
