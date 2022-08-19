@@ -40,7 +40,7 @@ three_star = ['正义骑士号', "THRM-EX", '斑点', '泡普卡', '月见夜', 
 alphabet_list = ['a','b','c','d','e','f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'l', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 draw_cd = {}
 
-__zx_plugin_name__ = "明日方舟干员"
+__zx_plugin_name__ = "明日方舟助理"
 __plugin_usage__ = """
 usage:
     管理员私聊指令:
