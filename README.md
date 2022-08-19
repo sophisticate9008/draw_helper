@@ -9,3 +9,7 @@
 cd请自行设置,默认180秒
 #
 功能 抽助理 我的助理 查看助理所有立绘 切换立绘[num]
+
+![IMG_20220818_081447](https://user-images.githubusercontent.com/94435821/185560720-c5c40b96-0e8a-46ba-8ea6-4a3bf6f0259f.jpg)
+
+悲！！！
