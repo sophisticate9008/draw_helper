@@ -253,3 +253,4 @@
 253	铸铁	https://prts.wiki/images/4/47/立绘_铸铁_skin1.png					
 254	濯尘芙蓉						
 255	浊心斯卡蒂	https://prts.wiki/images/a/a8/立绘_浊心斯卡蒂_skin1.png
+256 梓兰
