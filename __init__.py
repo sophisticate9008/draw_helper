@@ -1,10 +1,12 @@
 
 import asyncio
 import os
+import re
+from utils.image_utils import text2image
 from configs.config import NICKNAME
 from services.log import logger
 from utils.data_utils import init_rank
-from utils.message_builder import image , at
+from utils.message_builder import image , at, record, text
 from nonebot import on_command
 from nonebot.typing import T_State
 from utils.utils import is_number
@@ -48,7 +50,7 @@ usage:
         更新干员数据 name(用于补全空缺和新增干员)
     抽干员:
         指令:
-        抽助理
+        抽干员
     设置助理:
         指令:
         我的助理
@@ -58,6 +60,11 @@ usage:
     切换立绘/皮肤为默认形象
         指令:
         切换立绘[index]
+    助理随机语音:
+        默认日文,可以在后面加中文参数
+        指令:
+        助理随机语音 ?[中文]
+        
 """.strip()
 
 __plugin_superuser_usage__ = """
@@ -83,6 +90,8 @@ draw_helper = on_command("抽助理",permission=GROUP, priority=5, block=True)
 my_helper = on_command("我的助理",permission=GROUP, priority=5, block=True)
 check_helper = on_command("查看助理所有立绘",permission=GROUP, priority=5, block=True)
 switch_paint = on_command("切换立绘",permission=GROUP, priority=5, block=True)
+voice = on_command("助理随机语音",permission=GROUP, priority=5, block=True)
+
 
 @update_list.handle()
 async def _(bot: Bot,
@@ -398,3 +407,56 @@ async def _(bot: Bot,
             await switch_paint.finish('超出索引值', at_sender = True)
     else:
         await switch_paint.finish('不是数字', at_sender = True)
+
+
+@voice.handle()
+async def _(bot: Bot,
+            event: GroupMessageEvent,
+            state: T_State,
+            args: Message = CommandArg(),
+            ):
+    uid = event.user_id
+    group = event.group_id
+    msg = args.extract_plain_text().strip()
+    list_my = await helper_intact.my(group, uid)
+    if list_my == 0:
+        await my_helper.finish("你还没有抽助理",at_sender = True)
+    name = list_my[0]
+    url_jp = 'https://static.prts.wiki/voice/{}/{}_{}.wav'
+    url_cn = 'https://static.prts.wiki/voice_cn/{}/{}_{}.wav'
+    url_text = 'https://prts.wiki/index.php?title={}/语音记录&action=edit'
+    ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.81 Safari/537.36 Edg/104.0.1293.54'
+    r = httpx.get(url=url_text.format(name), headers={'User-Agent': ua}, timeout=5)
+    parse_html = etree.HTML(r.text)
+    xpath_voice = '//textarea/text()'
+    char_voice=parse_html.xpath(xpath_voice)
+    texts = char_voice[0].split('\n\n')    
+    key_text = texts[0]
+    key = re.search('key=(.*)', key_text)
+    key = key.groups()[0]    
+    list_voice = []
+    for i in texts:
+        list_tmp = []
+        results = re.search('=(.*)\n.*\|中文\|(.*)}}{{VoiceData/word\|日文\|',i)
+        try:
+            list_tmp.append(results.groups()[0])
+            list_tmp.append(results.groups()[1])
+            list_voice.append(list_tmp)
+        except:
+            pass
+    voice_sel = random.choice(list_voice)
+    voice_title = voice_sel[0]
+    voice_text = voice_sel[1]
+    url_voice = url_jp.format(key, name, voice_title)
+    if msg == '中文':
+        url_voice = url_cn.format(key, name, voice_title)  
+        if await check_url(url_voice):
+            await voice.send(record(url_voice))
+            await voice.finish()
+        else:
+            await voice.finish('你当前的助理没有中文语音', at_sender = True)       
+    await voice.send(record(url_voice))
+    await voice.finish(voice_text)
+    
+        
+
