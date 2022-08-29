@@ -1,8 +1,12 @@
 
 # draw_helper 转型为收集游戏 以前版本在releases
 以前下载过的使用前需执行指令   更新干员数据
-#2022/8/29
+
+#
+2022/8/29
 修复星级录入失败的问题
+#
+十连可能会出现风控
 #
 ![image](https://user-images.githubusercontent.com/94435821/187121038-7051748b-e427-4036-b1f7-21dc5beef325.png)
 #
