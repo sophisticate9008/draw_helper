@@ -673,7 +673,7 @@ async def _(bot: Bot,
         text = ''
         for j in range(i * 30, (i + 1) * 30):
             try: 
-                text = text + list_return[j][1].ljust(30) + list_return[j][0] + '\n'
+                text = text + str(int(list_return[j][1]) + 1).ljust(30) + list_return[j][0] + '\n'
             except:
                 break
         msg_list.append(image(b64=(await text2image(text, color="#f9f6f2", padding=10)).pic2bs4()))
