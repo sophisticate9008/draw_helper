@@ -6,6 +6,10 @@
 2022/8/29
 修复星级录入失败的问题，仅一行
 增加干员录入失败跳过并提醒，增加容错
+
+十连改为一张图片，解决风控问题
+![RBITHWIY4MLT%VRS2`Z`HW8](https://user-images.githubusercontent.com/94435821/187234432-09b94c14-ee8f-4e4c-85c9-57f83eb57bd2.jpg)
+
 #
 十连可能会出现风控
 #
