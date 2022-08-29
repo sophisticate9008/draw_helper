@@ -104,7 +104,7 @@ usage:
 __plugin_des__ = ""
 __plugin_cmd__ = ["抽干员","设置助理", "我的助理", "查看助理所有立绘", "切换立绘[index]", '助理随机语音 ?[中文]', '我的干员', '我的黄票','黄票兑换']
 __plugin_type__ = ("群内小游戏",)
-__plugin_version__ = 2.0
+__plugin_version__ = 1.0
 __plugin_author__ = "冰蓝色光点"
 __plugin_settings__ = {
     "level": 5,
@@ -242,7 +242,10 @@ async def _(bot: Bot,
         for i in char_list:
             if await helper_star.is_exist(i):
                 continue
-            star = await get_star(i)
+            try:
+                star = await get_star(i)
+            except:
+                await bot.send(event, f"{i}录入星级出错跳过")
             await helper_star.star_record(i,star)
             logger.info(f"{i}星级为{star},录入")
         await bot.send(event,"干员星级录入完毕")
