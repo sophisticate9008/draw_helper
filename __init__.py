@@ -238,19 +238,18 @@ async def _(bot: Bot,
             await bot.send(event,'更新皮肤立绘信息完毕')
         except:
             await bot.send(event,"更新皮肤立绘信息完毕或出错停止")
-    try:
-        for i in char_list:
-            if await helper_star.is_exist(i):
-                continue
-            try:
-                star = await get_star(i)
-            except:
-                await bot.send(event, f"{i}录入星级出错跳过")
+    
+    for i in char_list:
+        if await helper_star.is_exist(i):
+            continue
+        try:
+            star = await get_star(i)
             await helper_star.star_record(i,star)
-            logger.info(f"{i}星级为{star},录入")
-        await bot.send(event,"干员星级录入完毕")
-    except:
-        await bot.send(event,"干员星级录入完毕")    
+        except:
+            await bot.send(event, f"{i}录入星级出错跳过")
+        logger.info(f"{i}星级为{star},录入")
+    await bot.send(event,"干员星级录入完毕")
+     
     
 async def request(client, i, j, k, l, type):
     if type == 0:
