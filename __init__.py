@@ -240,7 +240,7 @@ async def _(bot: Bot,
             await bot.send(event,"更新皮肤立绘信息完毕或出错停止")
     try:
         for i in char_list:
-            if is_exist:
+            if await helper_star.is_exist(i):
                 continue
             star = await get_star(i)
             await helper_star.star_record(i,star)
