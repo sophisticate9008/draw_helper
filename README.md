@@ -8,6 +8,7 @@
 增加干员录入失败跳过并提醒，增加容错
 
 十连改为一张图片，解决风控问题
+
 ![RBITHWIY4MLT%VRS2`Z`HW8](https://user-images.githubusercontent.com/94435821/187234432-09b94c14-ee8f-4e4c-85c9-57f83eb57bd2.jpg)
 
 #
