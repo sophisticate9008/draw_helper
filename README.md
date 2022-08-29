@@ -1,5 +1,18 @@
 
-# draw_helper
+# draw_helper 转型为收集游戏 以前版本在releases
+以前下载过的使用前需执行指令   更新干员数据
+#
+![image](https://user-images.githubusercontent.com/94435821/187121038-7051748b-e427-4036-b1f7-21dc5beef325.png)
+#
+
+
+
+
+
+
+
+#
+#
 真寻bot插件 抽明日方舟助理 数据来自prts.wiki 
 转型收集游戏中，咕咕咕...
 #
