@@ -1,12 +1,15 @@
 
 
 import asyncio
+import base64
+from io import BytesIO
 import os
 import re
 from unicodedata import name
 import pypinyin
-
-from configs.path_config import IMAGE_PATH
+from PIL import Image, ImageDraw, ImageFont
+from configs.path_config import IMAGE_PATH, FONT_PATH
+yuanshen_ttf = str(FONT_PATH / "yuanshen.ttf")
 avatar_path = IMAGE_PATH / "draw_card" / "prts"
 from utils.image_utils import text2image
 from configs.config import NICKNAME
@@ -246,6 +249,7 @@ async def _(bot: Bot,
             star = await get_star(i)
             await helper_star.star_record(i,star)
         except:
+            logger.warning(f"{i}星级录入出错,跳过")
             await bot.send(event, f"{i}录入星级出错跳过")
         logger.info(f"{i}星级为{star},录入")
     await bot.send(event,"干员星级录入完毕")
@@ -265,7 +269,7 @@ async def request(client, i, j, k, l, type):
                 logger.info(f"{i}基础立绘{j}录入完毕")    
             else:
                 await info_helper_skin.store(i, link_splic, j)
-                logger.info(f"{i}皮肤立绘{j}录入完毕")        
+                logger.info(f"{i}皮肤立绘{j}录入完毕")
     except:
         pass
     
@@ -362,23 +366,11 @@ async def _(bot: Bot,
         msg_list = []
         player = (await GroupInfoUser.get_member_info(uid, group)).user_name
         msg_list = await chain_reply_text(bot, msg_list, f'此为{player}的十连')
+        list_list = []
         for i in range(10):
             list_return = await draw_single(group, uid, price)
-            name = list_return[0]
-            star = list_return[1]
-            star_str = star_char * star
-            count_ = list_return[2] + 1
-            ticket = list_return[3]
-            pinyin = pypinyin.pinyin(name, style=pypinyin.NORMAL)
-            pinyin_ = ''
-            for i in pinyin:
-                pinyin_ += i[0]
-            pic = pinyin_ + '.png'
-            avatar = avatar_path
-            avatar_ = str(avatar.absolute()) + '/' + pic
-            image_file = f"file:///{avatar_}"
-            msg_list = await chain_reply(bot, msg_list, image_file, f"{name}[{star_str}]\n抽到次数为{count_}\n获得黄票{ticket}")
-        await bot.send_group_forward_msg(group_id=group, messages=msg_list)
+            list_list.append(list_return)
+        await draw_char.finish(image(b64 = pic2b64(buide_image(list_list))), at_sender = True)
             
 
             
@@ -747,3 +739,62 @@ async def _(bot: Bot,
     await ticket_convert.finish("不支持兑换其他星级干员", at_sender = True)    
         
 
+def buide_image(list_:list):
+    img_back = Image.new("RGB",(720, 430),(255,255,255))
+    fontStyle = ImageFont.truetype(yuanshen_ttf, 12, encoding="utf-8")
+    draw = ImageDraw.Draw(img_back)
+    draw.text((0, 10), "干员名字", (0, 0, 0), font=fontStyle)
+    draw.text((0, 30), "星级", (0, 0, 0), font=fontStyle)
+    draw.text((0, 180), "抽到次数", (0, 0, 0), font=fontStyle)
+    draw.text((0, 200), "获得黄票", (0, 0, 0),  font=fontStyle)
+    draw.text((0, 220), "干员名字", (0, 0, 0), font=fontStyle)
+    draw.text((0, 240), "星级", (0, 0, 0), font=fontStyle)
+    draw.text((0, 390), "抽到次数", (0, 0, 0), font=fontStyle)
+    draw.text((0, 410), "获得黄票", (0, 0, 0), font=fontStyle)
+    color_ = []
+    color_.append((0, 170, 255))
+    color_.append((170, 120, 255))
+    color_.append((255, 230, 0))
+    color_.append((255, 130, 0))
+    tmp = 0
+    column_ = 0
+    
+    for list_return in list_:
+        tmp += 1
+        if tmp > 5:
+            column_ = 1
+            tmp -= 5
+        name = list_return[0]
+        star = list_return[1]
+        count_ = list_return[2] + 1
+        ticket = list_return[3]
+        star_ = star - 3
+        draw.text((120 * tmp, 10 + column_ * 210), name, (0, 0, 0), font=fontStyle)
+        draw.text((120 * tmp, 30 + column_ * 210), str(star), color_[star_], font=fontStyle)
+        draw.text((120 * tmp, 180 + column_ * 210), str(count_), (0, 0, 0), font=fontStyle)
+        draw.text((120 * tmp, 200 + column_ * 210), str(ticket), (0, 0, 0), font=fontStyle)
+        pinyin = pypinyin.pinyin(name, style=pypinyin.NORMAL)
+        pinyin_ = ''
+        for i in pinyin:
+            pinyin_ += i[0]
+        pic = pinyin_ + '.png'
+        avatar = avatar_path
+        avatar_ = str(avatar.absolute()) + '/' + pic
+        try:
+            img = Image.open(avatar_)
+            img_back.paste(img, (tmp * 120, 50 + column_ * 210))
+        except:
+            pass
+    return img_back
+
+def pic2b64(pic: Image) -> str:
+    """
+    说明:
+        PIL图片转base64
+    参数:
+        :param pic: 通过PIL打开的图片文件
+    """
+    buf = BytesIO()
+    pic.save(buf, format="PNG")
+    base64_str = base64.b64encode(buf.getvalue()).decode()
+    return "base64://" + base64_str
