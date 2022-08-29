@@ -172,6 +172,7 @@ class helper_intact(db.Model):
             await me.update(index = index).apply()
         else:
             return 0
+        
     @classmethod
     async def get_all_users(cls, group_id:int):
         if not group_id:
@@ -179,4 +180,206 @@ class helper_intact(db.Model):
         else:
             query = await cls.query.where((cls.group_id == group_id)).gino.all()
         return query                            
+
+class helper_star(db.Model):
+    __tablename__ = "helper_star"
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.Unicode(), nullable=True)
+    star = db.Column(db.Integer(), nullable=False)
+    @classmethod
+    async def star_record(cls, name, star):
+        query = cls.query.where(cls.name == name)
+        query = query.with_for_update()
+        me = await query.gino.first()
+        if me:
+            pass
+        else:
+            await cls.create(name = name, star = star)            
+    @classmethod
+    async def get_star_list(cls, star):
+        try:
+            query = await cls.query.where(cls.star == star).gino.all()          
+            return query
+        except:
+            return False
+    @classmethod
+    async def is_exist(cls, name):
+        query = cls.query.where(cls.name == name)
+        query = query.with_for_update()
+        me = await query.gino.first()
+        if me:
+            return True
+        else:
+            return False
+        
+class draw_price(db.Model):
+    __tablename__ = "draw_price"
+    id = db.Column(db.Integer(), primary_key=True)
+    group_id = db.Column(db.BigInteger(), nullable=True)
+    price = db.Column(db.Integer(), nullable=False)
+    @classmethod
+    async def set_price(cls, group, price):
+        query = cls.query.where(cls.group_id == group)
+        query = query.with_for_update()
+        me = await query.gino.first()
+        if me:
+            await me.update(price = price).apply()  
+        else:
+            await cls.create(group_id = group, price = price)          
+    @classmethod
+    async def get_price(cls, group):
+        query = cls.query.where(cls.group_id == group)
+        query = query.with_for_update()
+        me = await query.gino.first()
+        if me:
+            return me.price
+        else:
+            return 50
                 
+class helper_collect(db.Model):
+    __tablename__ = "helper_collect"
+    id = db.Column(db.Integer(), primary_key=True)
+    group_id = db.Column(db.BigInteger(), nullable=True)
+    uid = db.Column(db.BigInteger(), nullable=True)
+    name = db.Column(db.Unicode(), nullable=True)
+    ticket = db.Column(db.Integer(), nullable=False)
+    draw_count = db.Column(db.Integer(), nullable=False)
+    six_record = db.Column(db.Integer(), nullable=False)#记录保底
+    draw_record = db.Column(db.Unicode(), nullable=True)#记录六星抽卡记录
+    @classmethod
+    async def role_record(cls, group, uid, name):
+        query = cls.query.where((cls.group_id == group) & (cls.uid == uid))
+        query = query.with_for_update()
+        me = await query.gino.first()
+        name_create = name + '_' + '0' + ' '
+        if me:
+            info_str = me.name
+            name_list = info_str.split()
+            for i in name_list:
+                list_ = i.split('_')
+                if list_[0] == name:
+                    name_old = name + '_' + list_[1]
+                   
+                    
+                    num_new = int(list_[1]) + 1
+                    num_ = str(num_new)
+                    name_new = name + '_' + num_
+                   
+                    info_str = info_str.replace(name_old, name_new)
+                    await me.update(name = info_str).apply()
+                    await me.update(draw_count = me.draw_count + 1).apply()
+                    await me.update(six_record = me.six_record + 1).apply()
+                    return True
+            info_str_ = info_str + name_create
+            await me.update(name = info_str_).apply()
+            await me.update(draw_count = me.draw_count + 1).apply()       
+            await me.update(six_record = me.six_record + 1).apply()     
+        else:
+            await cls.create(group_id = group, uid = uid, name = name_create, ticket = 0, draw_count = 1, six_record = 1, draw_record = '')
+    @classmethod
+    async def get_num(cls, group, uid, name):
+        query = cls.query.where((cls.group_id == group) & (cls.uid == uid))
+        query = query.with_for_update()
+        me = await query.gino.first()
+        if me:      
+            name_all = me.name
+            name_list = name_all.split()                  
+            for i in name_list:
+                list_ = i.split('_')
+                if name == list_[0]:
+                    return int(list_[1])
+        else:
+            return False
+    @classmethod
+    async def get_all_num(cls, group, uid):
+        query = cls.query.where((cls.group_id == group) & (cls.uid == uid))
+        query = query.with_for_update()
+        me = await query.gino.first()
+        if me:
+            name_all = me.name
+            name_list = name_all.split()
+            list_return = []            
+            for i in name_list:                       
+                list_ = i.split('_')
+                list_return.append(list_)
+            return list_return
+        else:
+            return False
+    @classmethod
+    async def get_ticket(cls, group, uid):
+        query = cls.query.where((cls.group_id == group) & (cls.uid == uid))
+        query = query.with_for_update()
+        me = await query.gino.first()
+        if me:
+            return me.ticket
+        else:
+            return False
+    @classmethod
+    async def get_count(cls, group, uid):
+        query = cls.query.where((cls.group_id == group) & (cls.uid == uid))
+        query = query.with_for_update()
+        me = await query.gino.first() 
+        if me:
+            return me.draw_count   
+        else:
+            return False            
+    @classmethod
+    async def record_clear(cls, group, uid):
+        query = cls.query.where((cls.group_id == group) & (cls.uid == uid))
+        query = query.with_for_update()
+        me = await query.gino.first() 
+        if me:
+            await me.update(six_record = 0).apply()
+        else:
+            return False                            
+    @classmethod
+    async def get_six_record(cls, group, uid):
+        query = cls.query.where((cls.group_id == group) & (cls.uid == uid))
+        query = query.with_for_update()
+        me = await query.gino.first() 
+        if me:
+            return me.six_record
+        else:
+            return False
+    @classmethod
+    async def add_ticket(cls, group, uid, num):
+        query = cls.query.where((cls.group_id == group) & (cls.uid == uid))
+        query = query.with_for_update()
+        me = await query.gino.first()
+        if me:
+            await me.update(ticket = me.ticket + num).apply() 
+        else:
+            return False
+    @classmethod 
+    async def ticket_convert(cls, group, uid, num):
+        query = cls.query.where((cls.group_id == group) & (cls.uid == uid))
+        query = query.with_for_update()
+        me = await query.gino.first()
+        if me:
+            await me.update(ticket = me.ticket - num).apply()
+        else:
+            return False
+    @classmethod
+    async def draw_record_(cls, group, uid, str_):
+        query = cls.query.where((cls.group_id == group) & (cls.uid == uid))
+        query = query.with_for_update()
+        me = await query.gino.first()
+        if me:
+            await me.update(draw_record = me.draw_record + str_).apply()
+        else:
+            return False
+    @classmethod
+    async def get_record(cls, group, uid):
+        query = cls.query.where((cls.group_id == group) & (cls.uid == uid))
+        query = query.with_for_update()
+        me = await query.gino.first()
+        if me:
+            record = me.draw_record
+            list_return = []
+            record_ = record.split()
+            for i in record_:
+                list_return.append(i.split("_"))
+            
+            return list_return
+        else:
+            return False             
