@@ -5,14 +5,9 @@
 ![image](https://user-images.githubusercontent.com/94435821/187121038-7051748b-e427-4036-b1f7-21dc5beef325.png)
 #
 ![image](https://user-images.githubusercontent.com/94435821/187121918-78006097-a104-45c7-b827-1f4887cdcae8.png)
-
-
-
-
-
-
-
 #
+![image](https://user-images.githubusercontent.com/94435821/187121977-7c16c98f-ffb6-4550-b2a4-0f165091f1cb.png)
+
 #
 真寻bot插件 抽明日方舟助理 数据来自prts.wiki 
 转型收集游戏中，咕咕咕...
