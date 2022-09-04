@@ -245,17 +245,17 @@ async def _(bot: Bot,
         except:
             await asyncio.sleep(2)
             await bot.send(event,"更新皮肤立绘信息完毕或出错停止")
-    
-    for i in char_list:
-        if await helper_star.is_exist(i):
-            continue
-        async with httpx.AsyncClient(timeout=5) as client:  
-            tasks_list = []  
+    async with httpx.AsyncClient(timeout=5) as client:
+        tasks_list = []  
+        for i in char_list:
+            if await helper_star.is_exist(i):
+                continue
+            
             tasks_list.append(get_star(client, i, bot, event))
-            try:
-                await asyncio.gather(*tasks_list)
-            except:
-                pass
+        try:
+            await asyncio.gather(*tasks_list)
+        except:
+            pass
     await bot.send(event,"干员星级录入完毕")
    
     
