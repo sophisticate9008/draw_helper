@@ -232,28 +232,32 @@ async def _(bot: Bot,
         logger.info("开始录入干员基础立绘信息....")
         try:
             await store(char_list, 3, 0, 0)
+            await asyncio.sleep(2)
             await bot.send(event,'更新基础立绘信息完毕')
         except:
+            await asyncio.sleep(2)
             await bot.send(event,"更新基础立绘信息完毕或出错停止")
         logger.info("开始录入干员皮肤立绘信息....")
         try:
             await store(char_list, 4, 1, 0)
+            await asyncio.sleep(2)
             await bot.send(event,'更新皮肤立绘信息完毕')
         except:
+            await asyncio.sleep(2)
             await bot.send(event,"更新皮肤立绘信息完毕或出错停止")
     
     for i in char_list:
         if await helper_star.is_exist(i):
             continue
-        try:
-            star = await get_star(i)
-            await helper_star.star_record(i,star)
-        except:
-            logger.warning(f"{i}星级录入出错,跳过")
-            await bot.send(event, f"{i}录入星级出错跳过")
-        logger.info(f"{i}星级为{star},录入")
+        async with httpx.AsyncClient(timeout=5) as client:  
+            tasks_list = []  
+            tasks_list.append(get_star(client, i, bot, event))
+            try:
+                await asyncio.gather(*tasks_list)
+            except:
+                pass
     await bot.send(event,"干员星级录入完毕")
-     
+   
     
 async def request(client, i, j, k, l, type):
     if type == 0:
@@ -631,17 +635,23 @@ async def _(bot: Bot,
     await voice.send(record(url_voice))
     await voice.finish(voice_text)
     
-async def get_star(name:str):
+async def get_star(client, name:str, bot, event):
     url_pub = 'https://prts.wiki/index.php?title={}&action=edit'
     ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.81 Safari/537.36 Edg/104.0.1293.54'    
     url_only = url_pub.format(name)
-    r = httpx.request('get',url=url_only, headers={'User-Agent': ua}, timeout=5)
-    parse_html = etree.HTML(r.text)
-    xpath_char='//textarea/text()'
-    info_page=parse_html.xpath(xpath_char)
-    info_str = re.search('稀有度=(.*)',info_page[0])
-    star = int(info_str.groups()[0]) + 1
-    return star
+    try:
+        r = await client.get(url=url_only, headers={'User-Agent': ua})
+        parse_html = etree.HTML(r.text)
+        xpath_char='//textarea/text()'
+        info_page=parse_html.xpath(xpath_char)
+        info_str = re.search('稀有度=(.*)',info_page[0])
+        star = int(info_str.groups()[0]) + 1
+        await helper_star.star_record(name, star)
+        logger.info(f"{name}星级为{star},录入")
+    except:
+        logger.warning(f"{name}星级录入出错,跳过")
+        await bot.send(event, f"{name}录入星级出错跳过")
+        
 
 async def get_star_list(star):
     query = await helper_star.get_star_list(star)
