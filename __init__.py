@@ -907,7 +907,7 @@ async def build_img_record(list_ : list):
     draw = ImageDraw.Draw(img_back)
     for i in range(lens):
         name = list_[i][0]
-        count = list_[i][1]
+        count = int(list_[i][1]) + 1
         star = await helper_star.get_star(name)
         star_ = star - 3
         draw.text((0, 21 + i * 2 * 12), name, color_[star_], font=fontStyle)
