@@ -413,7 +413,7 @@ async def _(bot: Bot,
         for i in range(10):
             list_return = await draw_single(group, uid, price)
             list_list.append(list_return)
-        msg_id = await draw_char.finish(image(b64 = pic2b64(buide_image(list_list))), at_sender = True)
+        msg_id = await draw_char.send(image(b64 = pic2b64(buide_image(list_list))), at_sender = True)
         try:
             withdraw_message_manager.withdraw_message(
                 event,
