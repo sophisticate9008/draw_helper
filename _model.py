@@ -130,7 +130,25 @@ class info_helper_skin(db.Model):
             await me.update(skin6 = link).apply()
         else:
             await cls.create(name = name, skin1 = '', skin2 = '', skin3 = '', skin4 = '', skin5 = '', skin6 = link)
+    @classmethod
+    async def get_new_index(cls, name):
+        
+        query = cls.query.where(cls.name == name)
+        query = query.with_for_update()
+        me = await query.gino.first()  
+        if me:
             
+            list_ = [me.skin1, me.skin2, me.skin3, me.skin4, me.skin5, me.skin6]
+            for i in range(6):
+                            
+                if list_[i] != '' and list_[i + 1] == '':
+                    return i + 2
+        else:
+            return 1
+            
+
+                
+        
         
 class helper_intact(db.Model):
     __tablename__ = "helper_intact"
@@ -211,6 +229,15 @@ class helper_star(db.Model):
             return True
         else:
             return False
+    @classmethod
+    async def get_star(cls, name: str):
+        query = cls.query.where(cls.name == name)
+        query = query.with_for_update()
+        me = await query.gino.first()    
+        if me:
+            return me.star
+        else:
+            return False    
         
 class draw_price(db.Model):
     __tablename__ = "draw_price"
@@ -234,7 +261,7 @@ class draw_price(db.Model):
         if me:
             return me.price
         else:
-            return 50
+            return 10
                 
 class helper_collect(db.Model):
     __tablename__ = "helper_collect"

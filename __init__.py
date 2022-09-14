@@ -1,5 +1,4 @@
 
-
 import asyncio
 import base64
 from io import BytesIO
@@ -8,6 +7,8 @@ import re
 from unicodedata import name
 import pypinyin
 from PIL import Image, ImageDraw, ImageFont
+from utils.manager import withdraw_message_manager
+
 from configs.path_config import IMAGE_PATH, FONT_PATH
 yuanshen_ttf = str(FONT_PATH / "yuanshen.ttf")
 avatar_path = IMAGE_PATH / "draw_card" / "prts"
@@ -58,6 +59,7 @@ usage:
     管理员私聊指令:
         更新干员数据（用于第一次载入,长时间没更新也可以用这个大量更新）
         更新干员数据 name(用于补全空缺和新增干员)
+        更新干员数据 新增皮肤(会自动更新新增的皮肤)
         设置价格 群号 价格(默认50一抽,请根据群内金币膨胀情况设置)
     抽干员:
         单抽才有立绘
@@ -74,7 +76,7 @@ usage:
         我的助理
     查看助理所有立绘及皮肤
         指令:
-        查看助理所有立绘及皮肤
+        查看助理所有立绘
     切换立绘/皮肤为默认形象
         指令:
         切换立绘[index]
@@ -167,6 +169,7 @@ async def _(bot: Bot,
             count_out += 1
     if len(char_list) < 250:
         await update_list.finish("未知错误")
+    star_ = 0
     if msg in char_list:
         iscontinue = 0
     if iscontinue == 1:      
@@ -219,19 +222,36 @@ async def _(bot: Bot,
         logger.info(f"开始更新{msg}的基础信息")
         msg_list = [msg]
         try:
-            await store(msg_list, 3, 0, 1)
+            await store(msg_list, 1, 3, 0, 1)
         except:
             pass
         logger.info(f"开始更新{msg}的皮肤信息")
         try:
-            await store(msg_list, 4, 1, 1)
+            await store(msg_list, 1, 4, 1, 1)
         except:
             pass        
         await bot.send(event,f"更新{msg}信息完毕")
+    elif msg == '新增皮肤':
+        star_ = 1
+        list_new = await get_new_skin()
+        
+        for i in list_new:
+            
+            index = await info_helper_skin.get_new_index(i)
+ 
+            logger.info(f"要录入新皮肤的干员为{i},是第{index}款皮肤")
+            list_ = []
+            list_.append(i)
+            try:
+                await store(list_, index, index + 1, 1, 1)
+                await asyncio.sleep(2)
+                await bot.send(event, f"{i}新皮肤录入")
+            except:
+                await bot.send(event, f"{i}新皮肤录入失败")
     else:
         logger.info("开始录入干员基础立绘信息....")
         try:
-            await store(char_list, 3, 0, 0)
+            await store(char_list, 1, 3, 0, 0)
             await asyncio.sleep(2)
             await bot.send(event,'更新基础立绘信息完毕')
         except:
@@ -239,24 +259,34 @@ async def _(bot: Bot,
             await bot.send(event,"更新基础立绘信息完毕或出错停止")
         logger.info("开始录入干员皮肤立绘信息....")
         try:
-            await store(char_list, 4, 1, 0)
+            new_role = await get_new_role()
+            for i in new_role:
+                try:
+                    char_list.remove(i)
+                    logger.info(f"{i}为新增干员,跳过皮肤录入")
+                except:
+                    logger.info(f"{i}跳过皮肤录入失败")
+            await store(char_list, 1, 4, 1, 0)
             await asyncio.sleep(2)
             await bot.send(event,'更新皮肤立绘信息完毕')
         except:
             await asyncio.sleep(2)
-            await bot.send(event,"更新皮肤立绘信息完毕或出错停止")
-    async with httpx.AsyncClient(timeout=5) as client:
-        tasks_list = []  
-        for i in char_list:
-            if await helper_star.is_exist(i):
-                continue
+            await bot.send(event,"更新部分后,出错停止(部分包括0)")
+    if star_ == 0:
+        async with httpx.AsyncClient(timeout=5) as client:
+            tasks_list = []  
+            for i in char_list:
+                if await helper_star.is_exist(i):
+                    continue
+                tasks_list.append(get_star(client, i, bot, event))
+            try:
+                await asyncio.gather(*tasks_list)
+            except:
+                pass
+        await bot.send(event,"干员星级录入完毕")
+
             
-            tasks_list.append(get_star(client, i, bot, event))
-        try:
-            await asyncio.gather(*tasks_list)
-        except:
-            pass
-    await bot.send(event,"干员星级录入完毕")
+            
    
     
 async def request(client, i, j, k, l, type):
@@ -278,7 +308,7 @@ async def request(client, i, j, k, l, type):
         pass
     
 #存储函数     
-async def store(char_list, num, type, force):
+async def store(char_list, start, num, type, force):
     async with httpx.AsyncClient(timeout=5) as client:
         
         if type == 0:
@@ -295,7 +325,7 @@ async def store(char_list, num, type, force):
                     is_exist = await info_helper_skin.is_exist(i)
             if is_exist == 1:
                 continue
-            for j in range(1, num):
+            for j in range(start, num):
                 tasks_list = []
                 if j == 2 and i in three_star:
                     break;
@@ -362,7 +392,16 @@ async def _(bot: Bot,
         no_six = list_return[4]
         pic_url = await info_helper_basic.get_url(name)
         msg_tuple = (f'你本次抽到的干员为{name}', image(pic_url), f"稀有度为{star_str}\n已经抽到次数为{count_}\n本次获得黄票数量为{ticket}\n累计{no_six}没有获得六星")
-        await draw_char.finish(Message(msg_tuple), at_sender=True)
+        msg_id = await draw_char.send(Message(msg_tuple), at_sender=True)
+        try:
+            withdraw_message_manager.withdraw_message(
+                event,
+                msg_id,
+                (30, 1)
+            )
+
+        except:
+            pass
     else:
         price_ = price * 10
         if gold_have < price_:
@@ -374,11 +413,18 @@ async def _(bot: Bot,
         for i in range(10):
             list_return = await draw_single(group, uid, price)
             list_list.append(list_return)
-        await draw_char.finish(image(b64 = pic2b64(buide_image(list_list))), at_sender = True)
-            
+        msg_id = await draw_char.finish(image(b64 = pic2b64(buide_image(list_list))), at_sender = True)
+        try:
+            withdraw_message_manager.withdraw_message(
+                event,
+                msg_id,
+                (30, 1)
+            )
 
-            
-            
+        except:
+            pass
+        
+        
 async def chain_reply(bot, msg_list, image, text:str):
     data = {
         "type": "node",
@@ -538,6 +584,7 @@ async def _(bot: Bot,
     msg_tuple = (f'你当前的助理是{list_my[0]}', image(pic_url))
     await draw_char.finish(Message(msg_tuple), at_sender=True)                    
 
+#查看助理所有立绘
 @check_helper.handle()
 async def _(bot: Bot,
             event: GroupMessageEvent,
@@ -552,11 +599,15 @@ async def _(bot: Bot,
     else:
         list_select = await get_helper_all_pic(list_my[0])
     pic_num = len(list_select)  
-    msg_list = ["你当前助理的立绘"]
+    player = (await GroupInfoUser.get_member_info(uid, group)).user_name
+       
+    msg_list = [f"{player}当前的助理为{list_my[0]}"]
+    msg_list.append(f'以下为所有立绘') 
     for i in range(pic_num):
          msg_list.append(image(list_select[i]))
-    msg_tuple = tuple(msg_list)
-    await check_helper.finish(Message(msg_tuple), at_sender=True)  
+    await bot.send_group_forward_msg(
+        group_id=event.group_id, messages=custom_forward_msg(msg_list, bot.self_id)
+    ) 
     
       
     
@@ -651,7 +702,32 @@ async def get_star(client, name:str, bot, event):
     except:
         logger.warning(f"{name}星级录入出错,跳过")
         await bot.send(event, f"{name}录入星级出错跳过")
-        
+
+async def get_new_skin():
+    url = 'https://prts.wiki/w/%E9%A6%96%E9%A1%B5' 
+    ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.81 Safari/537.36 Edg/104.0.1293.54' 
+    try:
+        r = httpx.get(url=url, headers={'User-Agent': ua})
+        parse_html = etree.HTML(r.text)
+        xpath_char = '(//div/i[@class="fa-tshirt fas"])[1]/../..//a/@title'
+        list_return = parse_html.xpath(xpath_char)
+        return list_return
+    except:
+        return False
+    
+async def get_new_role():
+    url = 'https://prts.wiki/w/%E9%A6%96%E9%A1%B5' 
+    ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.81 Safari/537.36 Edg/104.0.1293.54' 
+    try:
+        r = httpx.get(url=url, headers={'User-Agent': ua})
+        parse_html = etree.HTML(r.text)
+        xpath_char = '(//div/i[@class="fa-user-plus fas"])[1]/../..//a/@title'
+        list_return = parse_html.xpath(xpath_char)
+        return list_return
+    except:
+        return False              
+            
+           
 
 async def get_star_list(star):
     query = await helper_star.get_star_list(star)
@@ -673,14 +749,16 @@ async def _(bot: Bot,
     msg_list.append(f'此为{player}的干员情况')
     draw_count = await helper_collect.get_count(group, uid)
     msg_list.append(f'共抽了{draw_count}抽')
-    for i in range(chaifen):
-        text = ''
-        for j in range(i * 30, (i + 1) * 30):
-            try: 
-                text = text + str(int(list_return[j][1]) + 1).ljust(30) + list_return[j][0] + '\n'
+    for i in reversed(range(chaifen)):
+        list_ = []
+        for j in reversed(range((i - 1) * 30, i * 30)):
+            try:
+                list_.append(list_return[j])
             except:
                 break
-        msg_list.append(image(b64=(await text2image(text, color="#f9f6f2", padding=10)).pic2bs4()))
+        a = await build_img_record(list_)
+        b = pic2b64(a)
+        msg_list.append(image(b64=b))
         
     await bot.send_group_forward_msg(
         group_id=event.group_id, messages=custom_forward_msg(msg_list, bot.self_id)
@@ -699,14 +777,17 @@ async def _(bot: Bot,
     msg_list = []
     player = (await GroupInfoUser.get_member_info(uid, group)).user_name
     msg_list.append(f'此为{player}的六星记录')
-    for i in range(chaifen):
-        text = ''
-        for j in range(i * 30, (i + 1) * 30):
+    
+    for i in reversed(range(chaifen)):
+        list_ = []
+        for j in reversed(range((i - 1) * 30, i * 30)):
             try:
-                text = text + list_return[j][1].ljust(30) + list_return[j][0] + '\n'
+                list_.append(list_return[j])
             except:
                 break
-        msg_list.append(image(b64=(await text2image(text, color="#f9f6f2", padding=10)).pic2bs4()))
+        a = await build_img_record(list_)
+        b = pic2b64(a)
+        msg_list.append(image(b64=b))
     await bot.send_group_forward_msg(
         group_id=event.group_id, messages=custom_forward_msg(msg_list, bot.self_id)
     )
@@ -747,7 +828,10 @@ async def _(bot: Bot,
         await helper_collect.role_record(group, uid, msg)
         await ticket_convert.finish(f"消耗45黄票成功兑换{msg}")    
     await ticket_convert.finish("不支持兑换其他星级干员", at_sender = True)    
-        
+
+
+
+            
 
 def buide_image(list_:list):
     img_back = Image.new("RGB",(720, 430),(255,255,255))
@@ -764,7 +848,7 @@ def buide_image(list_:list):
     color_ = []
     color_.append((0, 170, 255))
     color_.append((170, 120, 255))
-    color_.append((255, 230, 0))
+    color_.append((255, 180, 40))
     color_.append((255, 130, 0))
     tmp = 0
     column_ = 0
@@ -808,3 +892,26 @@ def pic2b64(pic: Image) -> str:
     pic.save(buf, format="PNG")
     base64_str = base64.b64encode(buf.getvalue()).decode()
     return "base64://" + base64_str
+
+
+async def build_img_record(list_ : list):
+    color_ = []
+    color_.append((0, 170, 255))
+    color_.append((170, 120, 255))
+    color_.append((255, 180, 40))
+    color_.append((255, 130, 0))
+    lens = len(list_)
+
+    img_back = Image.new("RGB",(400, 42 + (lens * 2 - 1) * 12),(255,255,255))
+    fontStyle = ImageFont.truetype(yuanshen_ttf, 12, encoding="utf-8")
+    draw = ImageDraw.Draw(img_back)
+    for i in range(lens):
+        name = list_[i][0]
+        count = list_[i][1]
+        star = await helper_star.get_star(name)
+        star_ = star - 3
+        draw.text((0, 21 + i * 2 * 12), name, color_[star_], font=fontStyle)
+        draw.text((400 - 12 * 4, 21 + i * 2 * 12), str(count), (0, 0, 0), font=fontStyle)
+    return img_back
+        
+    
