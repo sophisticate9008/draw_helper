@@ -14,6 +14,9 @@
 我的干员 我的六星记录 根据星级将名字变为彩色并且改为倒叙排列
 
 新增抽干员30秒后撤回
+
+![image](https://user-images.githubusercontent.com/94435821/190189940-f635927f-2c4a-4c87-ac52-8f53c3dc2883.png)
+
 #
 2022/9/4
 
