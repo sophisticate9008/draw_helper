@@ -15,7 +15,7 @@
 
 新增抽干员30秒后撤回
 
-忘写了，所有立绘改为合并消息
+忘写了，所有立绘改为合并消息， 默认价格改为10
 
 ![image](https://user-images.githubusercontent.com/94435821/190189940-f635927f-2c4a-4c87-ac52-8f53c3dc2883.png)
 
