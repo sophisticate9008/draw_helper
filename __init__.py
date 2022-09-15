@@ -749,7 +749,7 @@ async def _(bot: Bot,
     msg_list.append(f'此为{player}的干员情况')
     draw_count = await helper_collect.get_count(group, uid)
     msg_list.append(f'共抽了{draw_count}抽')
-    for i in reversed(range(chaifen)):
+    for i in range(chaifen):
         list_ = []
         for j in reversed(range((i - 1) * 30, i * 30)):
             try:
@@ -778,7 +778,7 @@ async def _(bot: Bot,
     player = (await GroupInfoUser.get_member_info(uid, group)).user_name
     msg_list.append(f'此为{player}的六星记录')
     
-    for i in reversed(range(chaifen)):
+    for i in range(chaifen):
         list_ = []
         for j in reversed(range((i - 1) * 30, i * 30)):
             try:
