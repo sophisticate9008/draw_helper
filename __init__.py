@@ -275,6 +275,9 @@ async def _(bot: Bot,
     if star_ == 0:
         async with httpx.AsyncClient(timeout=5) as client:
             tasks_list = []  
+            new_role = await get_new_role()
+            for i in new_role:
+                char_list.append(i)
             for i in char_list:
                 if await helper_star.is_exist(i):
                     continue
