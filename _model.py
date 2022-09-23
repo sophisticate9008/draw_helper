@@ -143,6 +143,7 @@ class info_helper_skin(db.Model):
                             
                 if list_[i] != '' and list_[i + 1] == '':
                     return i + 2
+            return 1
         else:
             return 1
             
