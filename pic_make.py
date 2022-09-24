@@ -1,4 +1,6 @@
 from PIL import Image, ImageFilter, ImageDraw, ImageFont
+from configs.path_config import IMAGE_PATH, FONT_PATH
+yuanshen_ttf = str(FONT_PATH / "yuanshen.ttf")
 import cmath
 import os
 path_ = os.path.dirname(__file__)
@@ -142,7 +144,6 @@ def pic_make_(back, avatar_helper, avatar_qq, nickname, day_rest, ticket_num, te
     text_len = int(len(text_helper) * 1.5 * 12)
     talk_box = Image.new('RGBA', (text_len, 40), (0, 0, 0, 200))
     talk_box = round_corner(talk_box, 6)
-    yuanshen_ttf = res + 'yuanshen.ttf'
     fontStyle = ImageFont.truetype(yuanshen_ttf, 12 , encoding="utf-8")
 
 
