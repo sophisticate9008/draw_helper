@@ -154,7 +154,7 @@ def pic_make_(back, avatar_helper, avatar_qq, nickname, day_rest, ticket_num, te
         
     text_indiv = '签到成功，黄票加6'
     text_indiv1 = f'当前黄票为{ticket_num}'
-    nick_name = nickname
+    nick_name = "Dr." + nickname
 
     back.paste(logo_, (400 - int(logo_.size[0] / 2), 0), mask=logo_)
     back.paste(keluxier, (800 - keluxier.size[0], 0), mask=keluxier)
