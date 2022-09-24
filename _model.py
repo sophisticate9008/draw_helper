@@ -1,8 +1,5 @@
-
-
-
 from services.db_context import db
-
+from datetime import datetime, timedelta
 class info_helper_basic(db.Model):
     __tablename__ = "info_helper_basic"
     id = db.Column(db.Integer(), primary_key=True)
@@ -410,4 +407,63 @@ class helper_collect(db.Model):
             
             return list_return
         else:
-            return False             
+            return False      
+
+class moon_card_prts(db.Model):   
+    __tablename__ = "moon_card_prts"
+    id = db.Column(db.Integer(), primary_key=True)
+    group_id = db.Column(db.BigInteger(), nullable=False)
+    uid = db.Column(db.BigInteger(), nullable=False)
+    rest_day = db.Column(db.Integer(), nullable=False)
+    time_last = db.Column(db.Unicode(), nullable=False)
+    
+    @classmethod
+    async def get_buy_list(cls, group):
+        try:
+            query = await cls.query.where(cls.group_id == group).gino.all()          
+            return query
+        except:
+            return False
+    @classmethod
+    async def buy(cls, group, uid):
+        query = cls.query.where((cls.group_id == group) & (cls.uid == uid))
+        query = query.with_for_update() 
+        me = await query.gino.first()
+        if me:
+            await me.update(rest_day = me.rest_day + 30).apply()
+        else:
+            await cls.create(group_id = group, uid = uid, rest_day = 30, time_last = '0')
+    @classmethod    
+    async def get_rest_day(cls, group, uid):
+        query = cls.query.where((cls.group_id == group) & (cls.uid == uid))
+        query = query.with_for_update() 
+        me = await query.gino.first()
+        if me:
+            return me.rest_day
+        else:
+            return 0
+    @classmethod
+    async def check_in(cls, group, uid, time_last):
+        query = cls.query.where((cls.group_id == group) & (cls.uid == uid))
+        query = query.with_for_update() 
+        me = await query.gino.first()
+        if me:
+            await me.update(time_last = time_last).apply()
+            await me.update(rest_day = me.rest_day - 1).apply()
+        else:
+            return False
+    @classmethod
+    async def get_all_user(cls):
+        query = query.with_for_update()    
+        query = await cls.query.gino.all()
+        return query
+    
+    @classmethod
+    async def get_time(cls, group, uid):
+        query = cls.query.where((cls.group_id == group) & (cls.uid == uid))
+        query = query.with_for_update() 
+        me = await query.gino.first()
+        if me:
+            return me.time_last
+        else:
+            return str(datetime.now().date())       

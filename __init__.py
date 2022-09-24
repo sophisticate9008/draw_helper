@@ -1,14 +1,17 @@
-
 import asyncio
 import base64
 from io import BytesIO
 import os
 import re
-from unicodedata import name
 import pypinyin
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageFilter, ImageDraw, ImageFont
 from utils.manager import withdraw_message_manager
-
+from utils.decorator.shop import shop_register
+import nonebot
+from nonebot import Driver
+driver: Driver = nonebot.get_driver()
+from nonebot.plugin import require
+from utils.utils import scheduler
 from configs.path_config import IMAGE_PATH, FONT_PATH
 yuanshen_ttf = str(FONT_PATH / "yuanshen.ttf")
 avatar_path = IMAGE_PATH / "draw_card" / "prts"
@@ -37,9 +40,11 @@ from nonebot.params import CommandArg
 from models.group_member_info import GroupInfoUser
 from utils.utils import is_number
 from models.bag_user import BagUser
-from ._model import info_helper_basic, info_helper_skin, helper_intact, helper_star, helper_collect, draw_price
+from ._model import info_helper_basic, info_helper_skin, helper_intact, helper_star, helper_collect, draw_price, moon_card_prts
 import httpx
 from lxml import etree
+from .pic_make import pic_make_
+from datetime import datetime, timedelta
 path_ = os.path.dirname(__file__)
 path_.replace('\\', '/')
 data_basic = str(path_) + '/basic.txt'
@@ -98,6 +103,9 @@ usage:
         45黄票兑换任意5星干员
         指令:
         黄票兑换 name
+    签到:
+        23:50后自动消耗天数且不增加黄票
+        一天仅可签到一次
 """.strip()
 
 __plugin_superuser_usage__ = """
@@ -130,6 +138,7 @@ my_char = on_command("我的干员",permission=GROUP, priority=5, block=True)
 my_record = on_command("我的六星记录",permission=GROUP, priority=5, block=True)
 my_ticket = on_command("我的黄票",permission=GROUP, priority=5, block=True)
 ticket_convert = on_command("黄票兑换",permission=GROUP, priority=5, block=True)
+check_in = on_command("签到",permission=GROUP, priority=3, block=False)
 
 @update_list.handle()
 async def _(bot: Bot,
@@ -275,9 +284,6 @@ async def _(bot: Bot,
     if star_ == 0:
         async with httpx.AsyncClient(timeout=5) as client:
             tasks_list = []  
-            new_role = await get_new_role()
-            for i in new_role:
-                char_list.append(i)
             for i in char_list:
                 if await helper_star.is_exist(i):
                     continue
@@ -653,40 +659,17 @@ async def _(bot: Bot,
     if list_my == 0:
         await my_helper.finish("你还没有设置助理",at_sender = True)
     name = list_my[0]
-    url_jp = 'https://static.prts.wiki/voice/{}/{}_{}.wav'
-    url_cn = 'https://static.prts.wiki/voice_cn/{}/{}_{}.wav'
-    url_text = 'https://prts.wiki/index.php?title={}/语音记录&action=edit'
-    ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.81 Safari/537.36 Edg/104.0.1293.54'
-    r = httpx.get(url=url_text.format(name), headers={'User-Agent': ua}, timeout=5)
-    parse_html = etree.HTML(r.text)
-    xpath_voice = '//textarea/text()'
-    char_voice=parse_html.xpath(xpath_voice)
-    texts = char_voice[0].split('\n\n')    
-    key_text = texts[0]
-    key = re.search('key=(.*)', key_text)
-    key = key.groups()[0]    
-    list_voice = []
-    for i in texts:
-        list_tmp = []
-        results = re.search('=(.*)\n.*\|中文\|(.*)}}{{VoiceData/word\|日文\|',i)
-        try:
-            list_tmp.append(results.groups()[0])
-            list_tmp.append(results.groups()[1])
-            list_voice.append(list_tmp)
-        except:
-            pass
-    voice_sel = random.choice(list_voice)
-    voice_title = voice_sel[0]
-    voice_text = voice_sel[1]
-    url_voice = url_jp.format(key, name, voice_title)
+    list_return = await get_record_text(name, '阿巴阿巴')
     if msg == '中文':
-        url_voice = url_cn.format(key, name, voice_title)  
+        url_voice = list_return[0]
         if await check_url(url_voice):
             await voice.send(record(url_voice))
             await voice.finish()
         else:
-            await voice.finish('你当前的助理没有中文语音', at_sender = True)       
+            await voice.finish('你当前的助理没有中文语音', at_sender = True)      
+    url_voice = list_return[1] 
     await voice.send(record(url_voice))
+    voice_text = list_return[2]
     await voice.finish(voice_text)
     
 async def get_star(client, name:str, bot, event):
@@ -752,13 +735,13 @@ async def _(bot: Bot,
     msg_list.append(f'此为{player}的干员情况')
     draw_count = await helper_collect.get_count(group, uid)
     msg_list.append(f'共抽了{draw_count}抽')
-    for i in range(chaifen - 1, -1 , -1):
+    for i in reversed(range(chaifen)):
         list_ = []
-        for j in range((i + 1) * 30 - 1, i * 30 - 1, -1):
+        for j in reversed(range((i - 1) * 30, i * 30)):
             try:
                 list_.append(list_return[j])
             except:
-                continue
+                break
         a = await build_img_record(list_)
         b = pic2b64(a)
         msg_list.append(image(b64=b))
@@ -781,13 +764,13 @@ async def _(bot: Bot,
     player = (await GroupInfoUser.get_member_info(uid, group)).user_name
     msg_list.append(f'此为{player}的六星记录')
     
-    for i in range(chaifen - 1, -1, -1):
+    for i in reversed(range(chaifen)):
         list_ = []
-        for j in range((i + 1) * 30 - 1, i * 30 - 1, -1):
+        for j in reversed(range((i - 1) * 30, i * 30)):
             try:
                 list_.append(list_return[j])
             except:
-                continue
+                break
         a = await build_img_record(list_)
         b = pic2b64(a)
         msg_list.append(image(b64=b))
@@ -896,6 +879,45 @@ def pic2b64(pic: Image) -> str:
     base64_str = base64.b64encode(buf.getvalue()).decode()
     return "base64://" + base64_str
 
+async def get_record_text(name, title):
+    url_jp = 'https://static.prts.wiki/voice/{}/{}_{}.wav'
+    url_cn = 'https://static.prts.wiki/voice_cn/{}/{}_{}.wav'
+    url_text = 'https://prts.wiki/index.php?title={}/语音记录&action=edit'
+    ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.81 Safari/537.36 Edg/104.0.1293.54'
+    r = httpx.get(url=url_text.format(name), headers={'User-Agent': ua}, timeout=5)
+    parse_html = etree.HTML(r.text)
+    xpath_voice = '//textarea/text()'
+    char_voice=parse_html.xpath(xpath_voice)
+    texts = char_voice[0].split('\n\n')    
+    key_text = texts[0]
+    key = re.search('key=(.*)', key_text)
+    key = key.groups()[0]    
+    list_voice = []
+    for i in texts:
+        list_tmp = []
+        results = re.search('=(.*)\n.*\|中文\|(.*)}}{{VoiceData/word\|日文\|',i)
+        try:
+            list_tmp.append(results.groups()[0])
+            list_tmp.append(results.groups()[1])
+            list_voice.append(list_tmp)
+        except:
+            pass
+    voice_sel = random.choice(list_voice)       
+    for i in list_voice:
+        if i[0] == title:
+            voice_sel = i
+            break  
+    list_return = []    
+    voice_title = voice_sel[0]
+    voice_text = voice_sel[1]
+    url_voice_jp = url_jp.format(key, name, voice_title)
+    url_voice_cn = url_cn.format(key, name, voice_title)  
+    list_return.append(url_voice_cn)
+    list_return.append(url_voice_jp)
+    list_return.append(voice_text)
+    return list_return
+
+
 
 async def build_img_record(list_ : list):
     color_ = []
@@ -916,5 +938,122 @@ async def build_img_record(list_ : list):
         draw.text((0, 21 + i * 2 * 12), name, color_[star_], font=fontStyle)
         draw.text((400 - 12 * 4, 21 + i * 2 * 12), str(count), (0, 0, 0), font=fontStyle)
     return img_back
+
+async def get_pic_pil(url):
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(url, timeout=20)
+    resp.raise_for_status()
+    pic = resp.content
+    pil_return = Image.open(BytesIO(pic))
+    return pil_return
+
+async def build_sign_card(group:int, uid:int):
+    list_my = await helper_intact.my(group, uid)
+    if list_my == 0:
+        name = 'none'
+        url = 'none'
+    else:
+        name = list_my[0]
+        list_select = await get_helper_all_pic(name)
+        index_ = list_my[1] - 1
+        url = list_select[index_]
         
+    try:
+        back = await get_pic_pil(url)
+    except:
+        back = Image.new('RGBA', (800, 800), (255, 255, 255, 300))
+    if '_1' in url:
+        box = (back.size[0] / 4, 0, back.size[0] / 4 * 3, back.size[1] / 4) #剪裁参数
+        back = back.filter(ImageFilter.GaussianBlur(radius=18)) #高斯模糊
+        back = back.crop(box) #剪裁
+    else:
+        box = (back.size[0] / 4, back.size[0] / 4, back.size[0] / 4 * 3, back.size[1] / 4 * 2)
+        back = back.filter(ImageFilter.GaussianBlur(radius=18)) #高斯模糊
+        back = back.crop(box) #剪裁
+    nickname = (await GroupInfoUser.get_member_info(uid, group)).user_name
+    qq_avatar_url = f"http://q1.qlogo.cn/g?b=qq&nk={uid}&s=640"
+    try:
+        qq_avatar = await get_pic_pil(qq_avatar_url)
+    except:
+        qq_avatar = Image.new('RGBA', (640, 640), (255, 255, 255, 300))
+    
+    pinyin = pypinyin.pinyin(name, style=pypinyin.NORMAL)
+    pinyin_ = ''
+    for i in pinyin:
+        pinyin_ += i[0]
+    pic = pinyin_ + '.png'
+    avatar = avatar_path
+    avatar_ = str(avatar.absolute()) + '/' + pic
+    try:
+        avatar_helper = Image.open(avatar_)   
+    except:
+        avatar_helper =  Image.new('RGBA', (120, 120), (255, 255, 255, 300))
+    
+    try:
+        text_helper = (await get_record_text(name, "问候"))[2]
+    except:
+        text_helper = '啊吧啊吧'
+    ticket_num = await helper_collect.get_ticket(group, uid)   
+    rest_day = await moon_card_prts.get_rest_day(group, uid)
+    card = pic_make_(back, avatar_helper, qq_avatar, nickname, rest_day, ticket_num, text_helper)
+    return card
+    
+use = require("use")
+@driver.on_startup
+async def my_shop_mooncard_prts():
+    @shop_register(
+        name=("黄票月卡"),
+        price=(30),
+        des=(
+            "购买后使用将耗费抽卡金额的50倍增加30天月卡，发送签到触发月卡",
+        ),
+        
+        daily_limit=(10),
+        ** {"黄票月卡_multi":50},
+    )
+    async def sign_gift(user_id: int, group_id: int, multi: int):
+        price = await draw_price.get_price(group_id)
+        gold_have = await BagUser.get_gold(user_id, group_id)
+        if gold_have >= price * multi:   
+            await BagUser.spend_gold(user_id, group_id, price * multi)
+            await moon_card_prts.buy(group_id, user_id)
+        
+@check_in.handle()
+async def _(bot: Bot,
+            event: GroupMessageEvent,
+            state: T_State,
+            args: Message = CommandArg(),
+            ):
+    uid = event.user_id
+    group = event.group_id
+    a = datetime.now().date()
+    b = str(a)
+    if await moon_card_prts.get_rest_day(group, uid) > 0:
+        if b != await moon_card_prts.get_time(group, uid):
+            await helper_collect.add_ticket(group, uid, 6)
+            try:
+                sign_card = await build_sign_card(group, uid)
+            except:
+                await helper_collect.add_ticket(group, uid, -6)
+            await moon_card_prts.check_in(group, uid, b)
+            await check_in.send(image(b64 = pic2b64(sign_card)), at_sender = True)
+
+   
+@scheduler.scheduled_job(
+    "cron",
+    hour=23,
+    minute=50,
+)
+async def _():
+    try:
+        query = await moon_card_prts.get_all_user()
+        for i in query:
+            if i.rest_day > 0:
+                if i.time_last != str(datetime.now().date()):
+                    await moon_card_prts.check_in(i.group_id, i.uid, str(datetime.now().date()))
+    except:
+        logger.info("自动消耗月卡出错")
+                
+    
+    
     
