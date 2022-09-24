@@ -139,7 +139,7 @@ def pic_make_(back, avatar_helper, avatar_qq, nickname, day_rest, ticket_num, te
     qq_box = revise_size_h(qq_box, 82)
 
     text_helper = text_helper
-    text_len = int(len(text_helper) * 2.0 * 12)
+    text_len = int(len(text_helper) * 1.5 * 12)
     talk_box = Image.new('RGBA', (text_len, 40), (0, 0, 0, 200))
     talk_box = round_corner(talk_box, 6)
     yuanshen_ttf = res + 'yuanshen.ttf'
