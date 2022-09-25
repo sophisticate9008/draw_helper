@@ -454,7 +454,6 @@ class moon_card_prts(db.Model):
             return False
     @classmethod
     async def get_all_user(cls):
-        query = query.with_for_update()    
         query = await cls.query.gino.all()
         return query
     
