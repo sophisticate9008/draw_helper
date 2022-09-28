@@ -227,6 +227,28 @@ async def _(bot: Bot,
                         logger.info(f"初始化载入{name}皮肤立绘{ord}完成")                            
         except:
             pass              
+
+    if star_ == 0:
+
+        async with httpx.AsyncClient(timeout=5) as client:
+
+            tasks_list = []  
+
+            for i in char_list:
+
+                if await helper_star.is_exist(i):
+
+                    continue
+
+                tasks_list.append(get_star(client, i, bot, event))
+
+            try:
+
+                await asyncio.gather(*tasks_list)
+
+            except:
+
+                pass
     if msg in char_list:
         logger.info(f"开始更新{msg}的基础信息")
         msg_list = [msg]
