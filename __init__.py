@@ -293,6 +293,7 @@ async def _(bot: Bot,
             new_role = await get_new_role()
             for i in new_role:
                 try:
+                    await info_helper_skin.record_none(i, '')
                     char_list.remove(i)
                     logger.info(f"{i}为新增干员,跳过皮肤录入")
                 except:
