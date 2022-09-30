@@ -610,7 +610,11 @@ async def _(bot: Bot,
     else:
         list_select = await get_helper_all_pic(list_my[0])
         
-    pic_url = list_select[list_my[1] - 1]
+    try:
+        pic_url = list_select[list_my[1] - 1]
+    except:
+        pic_url = list_select[0]
+        
     
     msg_tuple = (f'你当前的助理是{list_my[0]}', image(pic_url))
     await draw_char.finish(Message(msg_tuple), at_sender=True)                    
@@ -978,7 +982,10 @@ async def build_sign_card(group:int, uid:int):
         name = list_my[0]
         list_select = await get_helper_all_pic(name)
         index_ = list_my[1] - 1
-        url = list_select[index_]
+        try:
+            url = list_select[index_]
+        except:
+            url = list_select[0]
         
     try:
         back = await get_pic_pil(url)
@@ -1053,11 +1060,11 @@ async def _(bot: Bot,
     if await moon_card_prts.get_rest_day(group, uid) > 0:
         if b != await moon_card_prts.get_time(group, uid):
             await helper_collect.add_ticket(group, uid, 6)
+            await moon_card_prts.check_in(group, uid, b)
             try:
                 sign_card = await build_sign_card(group, uid)
             except:
-                await helper_collect.add_ticket(group, uid, -6)
-            await moon_card_prts.check_in(group, uid, b)
+                await helper_collect.finish("已签到,但图片出错",at_sender=True)
             await check_in.send(image(b64 = pic2b64(sign_card)), at_sender = True)
 
    
