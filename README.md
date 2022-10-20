@@ -9,6 +9,7 @@
 修复真寻更新月卡出错
 
 新增功能
+
 ![image](https://user-images.githubusercontent.com/94435821/196965135-713f9374-0a18-4f14-802b-7600a3070f93.png)
 
 夜晚11.50猜成语的字典强制清空
