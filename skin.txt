@@ -1,7 +1,7 @@
 1	多萝西						
 2	阿	https://prts.wiki/images/7/76/立绘_阿_skin1.png	https://prts.wiki/images/a/a7/立绘_阿_skin2.png				
 3	Lancet-2	https://prts.wiki/images/2/25/立绘_Lancet-2_skin1.png					
-4	阿米娅	https://prts.wiki/images/0/0c/立绘_阿米娅_skin1.png	https://prts.wiki/images/3/3f/立绘_阿米娅_skin2.png	https://prts.wiki/images/1/1d/立绘_阿米娅_skin3.png		
+4	阿米娅	https://prts.wiki/images/0/0c/立绘_阿米娅_skin1.png	https://prts.wiki/images/3/3f/立绘_阿米娅_skin2.png	https://prts.wiki/images/1/1d/立绘_阿米娅_skin3.png			
 5	阿消	https://prts.wiki/images/5/52/立绘_阿消_skin1.png					
 6	艾雅法拉	https://prts.wiki/images/e/e8/立绘_艾雅法拉_skin1.png					
 7	安洁莉娜	https://prts.wiki/images/f/f8/立绘_安洁莉娜_skin1.png	https://prts.wiki/images/4/4b/立绘_安洁莉娜_skin2.png				
@@ -41,7 +41,7 @@
 42	孑	https://prts.wiki/images/8/83/立绘_孑_skin1.png					
 43	杰克	https://prts.wiki/images/c/ca/立绘_杰克_skin1.png					
 54	凛冬	https://prts.wiki/images/0/0a/立绘_凛冬_skin1.png	https://prts.wiki/images/b/bf/立绘_凛冬_skin2.png				
-44	杰西卡	https://prts.wiki/images/c/c2/立绘_杰西卡_skin1.png	https://prts.wiki/images/a/a6/立绘_杰西卡_skin2.png	https://prts.wiki/images/4/44/立绘_杰西卡_skin3.png	
+44	杰西卡	https://prts.wiki/images/c/c2/立绘_杰西卡_skin1.png	https://prts.wiki/images/a/a6/立绘_杰西卡_skin2.png	https://prts.wiki/images/4/44/立绘_杰西卡_skin3.png			
 45	卡达	https://prts.wiki/images/b/b5/立绘_卡达_skin1.png					
 46	卡夫卡	https://prts.wiki/images/2/2e/立绘_卡夫卡_skin1.png					
 47	卡涅利安	https://prts.wiki/images/c/c7/立绘_卡涅利安_skin2.png					
@@ -77,7 +77,6 @@
 79	阿米娅(近卫)						
 80	埃拉托						
 81	艾丽妮						
-82	爱丽丝						
 83	艾丝黛尔						
 84	安比尔						
 85	百炼嘉维尔						
@@ -85,6 +84,7 @@
 87	薄绿						
 88	绮良	https://prts.wiki/images/3/33/立绘_绮良_skin1.png					
 89	砾	https://prts.wiki/images/c/c3/立绘_砾_skin1.png	https://prts.wiki/images/x/x2/立绘_砾_skin3.png				
+170	史都华德	https://prts.wiki/images/f/fe/立绘_史都华德_skin1.png					
 91	猎蜂	https://prts.wiki/images/a/a6/立绘_猎蜂_skin1.png	https://prts.wiki/images/a/ae/立绘_猎蜂_skin2.png				
 92	令						
 93	翎羽						
@@ -103,7 +103,6 @@
 107	地灵						
 108	杜林						
 109	菲亚梅塔						
-110	风丸						
 111	芙兰卡						
 112	归溟幽灵鲨						
 113	海蒂						
@@ -132,7 +131,6 @@
 137	苦艾						
 138	拉普兰德	https://prts.wiki/images/1/11/立绘_拉普兰德_skin1.png					
 139	蓝毒	https://prts.wiki/images/e/ea/立绘_蓝毒_skin1.png					
-140	老鲤						
 141	麦哲伦	https://prts.wiki/images/4/4f/立绘_麦哲伦_skin1.png					
 142	梅						
 143	梅尔	https://prts.wiki/images/0/0d/立绘_梅尔_skin1.png					
@@ -172,7 +170,8 @@
 167	蛇屠箱	https://prts.wiki/images/0/08/立绘_蛇屠箱_skin1.png					
 168	深靛	https://prts.wiki/images/9/9e/立绘_深靛_skin1.png					
 90	洛洛	https://prts.wiki/images/0/0a/立绘_洛洛_skin1.png	https://prts.wiki/images/4/46/立绘_洛洛_skin2.png				
-170	史都华德	https://prts.wiki/images/f/fe/立绘_史都华德_skin1.png					
+82	爱丽丝	https://prts.wiki/images/c/c0/立绘_爱丽丝_skin1.png					
+140	老鲤	https://prts.wiki/images/0/00/立绘_老鲤_skin1.png					
 181	斯卡蒂	https://prts.wiki/images/1/1b/立绘_斯卡蒂_skin1.png					
 182	四月						
 183	松果	https://prts.wiki/images/e/e2/立绘_松果_skin1.png					
@@ -258,4 +257,10 @@
 225	夜半	https://prts.wiki/images/2/20/立绘_夜半_skin1.png					
 231	野鬃	https://prts.wiki/images/9/97/立绘_野鬃_skin1.png					
 260	预备干员-重装						
-261	郁金香	
+261	郁金香						
+262	白铁						
+263	达格达						
+264	明椒						
+265	铅踝						
+266	海沫						
+110	风丸	https://prts.wiki/images/f/fd/立绘_风丸_skin1.png		

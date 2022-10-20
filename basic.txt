@@ -259,3 +259,7 @@
 259	海沫	https://prts.wiki/images/d/df/立绘_海沫_1.png	https://prts.wiki/images/b/bc/立绘_海沫_2.png
 260	预备干员-重装	https://prts.wiki/images/d/d0/立绘_预备干员-重装_1.png	
 261	郁金香	https://prts.wiki/images/f/fa/立绘_郁金香_1.png	https://prts.wiki/images/7/74/立绘_郁金香_2.png
+262	白铁	https://prts.wiki/images/2/28/立绘_白铁_1.png	https://prts.wiki/images/1/1b/立绘_白铁_2.png
+263	达格达	https://prts.wiki/images/c/c8/立绘_达格达_1.png	https://prts.wiki/images/6/65/立绘_达格达_2.png
+264	明椒	https://prts.wiki/images/9/94/立绘_明椒_1.png	https://prts.wiki/images/6/6e/立绘_明椒_2.png
+265	铅踝	https://prts.wiki/images/4/42/立绘_铅踝_1.png	https://prts.wiki/images/c/c7/立绘_铅踝_2.png
