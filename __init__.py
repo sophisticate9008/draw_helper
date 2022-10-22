@@ -1203,7 +1203,7 @@ async def build_sign_card(group:int, uid:int):
     try:
         text_helper = (await get_record_text(name, "问候"))[2]
     except:
-        text_helper = '啊吧啊吧'
+        text_helper = '博士，早上好'
     ticket_num = await helper_collect.get_ticket(group, uid)   
     rest_day = await moon_card_prts.get_rest_day(group, uid)
     card = pic_make_(back, avatar_helper, qq_avatar, nickname, rest_day, ticket_num, text_helper)
