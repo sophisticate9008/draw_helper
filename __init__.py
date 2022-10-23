@@ -39,7 +39,7 @@ from nonebot.adapters.onebot.v11 import (
 from nonebot.permission import SUPERUSER
 import random
 import time
-from nonebot.params import CommandArg, ShellCommandArgs, Arg, State
+from nonebot.params import CommandArg, ShellCommandArgs, Arg
 from models.group_member_info import GroupInfoUser
 from utils.utils import is_number,get_message_img, get_message_text
 from models.bag_user import BagUser
@@ -294,7 +294,7 @@ async def _(bot: Bot,
 async def _(
     bot: Bot,
     event: GroupMessageEvent,
-    state: T_State = State(),
+    state: T_State,
     args: Namespace = ShellCommandArgs(),
 ):
     group = event.group_id
@@ -328,7 +328,7 @@ async def _(
 async def _(
     bot: Bot,
     event: GroupMessageEvent,
-    state: T_State = State(),
+    state: T_State,
     args: Namespace = ShellCommandArgs(),
 ):
     group = event.group_id
