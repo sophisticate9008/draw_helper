@@ -779,7 +779,7 @@ async def _(bot: Bot,
     uid = event.user_id
     group = event.group_id
     msg = args.extract_plain_text().strip()
-    list_return = get_all_have(group, uid)
+    list_return = await get_all_have(group, uid)
     if list_return:         
         if msg in list_return:
             name = msg
