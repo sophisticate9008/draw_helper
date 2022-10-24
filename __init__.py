@@ -658,11 +658,12 @@ async def _(bot: Bot,
         msg_tuple = (f'你本次抽到的干员为{name}', image(pic_url), f"稀有度为{star_str}\n已经抽到次数为{count_}\n本次获得黄票数量为{ticket}\n累计{no_six}没有获得六星")
         msg_id = await draw_char.send(Message(msg_tuple), at_sender=True)
         try:
-            withdraw_message_manager.withdraw_message(
-                event,
-                msg_id,
-                (60, 1)
-            )
+            if star != 6:                
+                withdraw_message_manager.withdraw_message(
+                    event,
+                    msg_id,
+                    (60, 1)
+                )
 
         except:
             pass
@@ -673,16 +674,23 @@ async def _(bot: Bot,
         msg_list = []
         player = (await GroupInfoUser.get_member_info(uid, group)).user_name
         list_list = []
+        six_num = 0
+        five_num = 0
         for i in range(10):
             list_return = await draw_single(group, uid, price)
+            if list_return[1] == 5:
+                five_num += 1
+            if list_return[1] == 6:
+                six_num += 1
             list_list.append(list_return)
         msg_id = await draw_char.send(image(b64 = pic2b64(buide_image(list_list))), at_sender = True)
         try:
-            withdraw_message_manager.withdraw_message(
-                event,
-                msg_id,
-                (60, 1)
-            )
+            if six_num == 0 and five_num < 3:
+                withdraw_message_manager.withdraw_message(
+                    event,
+                    msg_id,
+                    (60, 1)
+                )
 
         except:
             pass
@@ -1092,10 +1100,19 @@ async def get_record_text(name, title):
     url_jp = 'https://static.prts.wiki/voice/{}/{}_{}.wav'
     url_cn = 'https://static.prts.wiki/voice_cn/{}/{}_{}.wav'
     url_text = 'https://prts.wiki/index.php?title={}/语音记录&action=edit'
-    r = await AsyncHttpx.get(url=url_text.format(name))
-    parse_html = etree.HTML(r.text)
-    xpath_voice = '//textarea/text()'
-    char_voice=parse_html.xpath(xpath_voice)
+    count = 0
+    issucceed = 0
+    while count < 3 and issucceed == 0:
+        try:
+            r = await AsyncHttpx.get(url=url_text.format(name))
+            parse_html = etree.HTML(r.text)
+            xpath_voice = '//textarea/text()'
+            char_voice=parse_html.xpath(xpath_voice)
+            issucceed = 1
+        except:
+            logger.warning("语音获取失败,2s后重试")
+            count += 1
+            await asyncio.sleep(2)
     texts = char_voice[0].split('\n\n')    
     key_text = texts[0]
     key = re.search('key=(.*)', key_text)
