@@ -59,7 +59,17 @@ class info_helper_basic(db.Model):
             return 1
         else:
             return 0                        
-         
+    @classmethod
+    async def clear(cls, name):
+        query = cls.query.where(cls.name == name)
+        query = query.with_for_update()
+        me = await query.gino.first()  
+        if me:
+            await me.update(painting1 = '').apply()
+            await me.update(painting2 = '').apply()
+        else:
+            return False
+        
         
                 
 class info_helper_skin(db.Model):

@@ -46,10 +46,12 @@ from models.bag_user import BagUser
 from argparse import Namespace
 from ._model import info_helper_basic, info_helper_skin, helper_intact, helper_star, helper_collect, draw_price, moon_card_prts
 from lxml import etree
-from .pic_make import pic_make_
+from .pic_make import pic_make_, revise_size_h
+
 from datetime import datetime, timedelta
 from nonebot.rule import ArgumentParser
 from nonebot.matcher import Matcher
+from hashlib import md5
 path_ = os.path.dirname(__file__)
 path_.replace('\\', '/')
 data_basic = str(path_) + '/basic.txt'
@@ -58,7 +60,7 @@ pub_link = 'https://prts.wiki/images/{}/{}{}/'
 pub_basic = '立绘_{}_{}.png'
 pub_skin = '立绘_{}_skin{}.png'
 ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.81 Safari/537.36 Edg/104.0.1293.54'
-
+skin_top = 5
 three_star = ['正义骑士号', "THRM-EX", '斑点', '泡普卡', '月见夜', '空爆', '梓兰', '史都华德', '安赛尔', '芙蓉', '炎熔', '安德切尔', '克洛丝', '米格鲁', '卡缇', 
                 '玫兰莎', '翎羽', '香草', '芬', '12F', '杜林', '巡林者', '黑角', '夜刀', 'Castle-3', 'Lancet-2']
 alphabet_list = ['a','b','c','d','e','f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'l', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
@@ -287,9 +289,6 @@ async def _(bot: Bot,
         if msg == name:
             guess_voice[group]["win_uid"] = uid
         
-        
-    
-
 @painting.handle()
 async def _(
     bot: Bot,
@@ -387,9 +386,10 @@ async def _(bot: Bot,
     iscontinue = 1
     if msg in char_list:
         iscontinue = 0
+    if any(key in msg for key in["新增皮肤","刷新所有干员信息"]):
+        iscontinue = 0
     while (len(char_list) < 250 and count_out < 10):
         role_list = []
-
         url = 'https://prts.wiki/w/%E5%88%86%E7%B1%BB:%E5%B9%B2%E5%91%98'
         try:
             for i in range(2):
@@ -411,132 +411,8 @@ async def _(bot: Bot,
             count_out += 1
     if len(char_list) < 250:
         await update_list.finish("未知错误")
-    star_ = 0
-    if msg in char_list:
-        iscontinue = 0
-    if iscontinue == 1:      
-        try:
-            with open(data_basic, 'r', encoding='utf-8') as ba:
-                for i in ba:
-                    arr_basic = i.split()
-                    name = arr_basic[1]
-                    is_exist = await info_helper_basic.is_exist(name)
-                    if is_exist == 1:
-                        logger.info(f"{name}基础信息已载入,跳过")
-                        continue            
-                    paint1 = arr_basic[2]
-                    await info_helper_basic.store(name, paint1, 1)
-                    logger.info(f"初始化载入{name}基础立绘1完成")
-                    if name in three_star:
-                        continue   
-                    try:
-                        paint2 = arr_basic[3]
-                    except:
-                        pass
-                    if paint2 != '':
-                        await info_helper_basic.store(name, paint2, 2)
-                        logger.info(f"初始化载入{name}基础立绘2完成")
-            with open(data_skin, 'r', encoding='utf-8') as sk:
-                for i in sk:
-                    arr_skin = i.split()
-                    name = arr_skin[1]
-                    is_exist = await info_helper_skin.is_exist(name)
-                    if is_exist == 1:
-                        logger.info(f"{name}皮肤信息已载入,跳过")
-                        continue
-                    skin = []
-                    for j in range(2, 5):
-                        try:
-                            skin.append(arr_skin[j])
-                        except:
-                            pass
-                    if len(skin) == 0:
-                        await info_helper_skin.record_none(name, '')  
-                        logger.info(f"{name}没有皮肤")                   
-                        continue
-                    for j in range(len(skin)):
-                        await info_helper_skin.store(name, skin[j], j + 1)
-                        ord = j + 1
-                        logger.info(f"初始化载入{name}皮肤立绘{ord}完成")                            
-        except:
-            pass              
 
-    if star_ == 0:
-        ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.81 Safari/537.36 Edg/104.0.1293.54'
-        async with httpx.AsyncClient( headers={'User-Agent': ua},timeout=5) as client:
-
-            tasks_list = []  
-
-            for i in char_list:
-
-                if await helper_star.is_exist(i):
-
-                    continue
-
-                tasks_list.append(get_star(client, i, bot, event))
-
-            try:
-
-                await asyncio.gather(*tasks_list)
-
-            except:
-
-                pass
-    if msg in char_list:
-        logger.info(f"开始更新{msg}的基础信息")
-        msg_list = [msg]
-        try:
-            await store(msg_list, 1, 3, 0, 1)
-        except:
-            pass
-        logger.info(f"开始更新{msg}的皮肤信息")
-        try:
-            await store(msg_list, 1, 4, 1, 1)
-        except:
-            pass        
-        await bot.send(event,f"更新{msg}信息完毕")
-    elif msg == '新增皮肤':
-        star_ = 1
-        list_new = await get_new_skin()
-        
-        for i in list_new:
-            
-            index = await info_helper_skin.get_new_index(i)
- 
-            logger.info(f"要录入新皮肤的干员为{i},是第{index}款皮肤")
-            list_ = []
-            list_.append(i)
-            try:
-                await store(list_, index, index + 1, 1, 1)
-                await asyncio.sleep(2)
-                await bot.send(event, f"{i}新皮肤录入")
-            except:
-                await bot.send(event, f"{i}新皮肤录入失败")
-    else:
-        logger.info("开始录入干员基础立绘信息....")
-        try:
-            await store(char_list, 1, 3, 0, 0)
-            await asyncio.sleep(2)
-            await bot.send(event,'更新基础立绘信息完毕')
-        except:
-            await asyncio.sleep(2)
-            await bot.send(event,"更新基础立绘信息完毕或出错停止")
-        logger.info("开始录入干员皮肤立绘信息....")
-        try:
-            new_role = await get_new_role()
-            for i in new_role:
-                try:
-                    await info_helper_skin.record_none(i, '')
-                    logger.info(f"{i}为新增干员,跳过皮肤录入")
-                except:
-                    logger.info(f"{i}跳过皮肤录入失败")
-            await store(char_list, 1, 4, 1, 0)
-            await asyncio.sleep(2)
-            await bot.send(event,'更新皮肤立绘信息完毕')
-        except:
-            await asyncio.sleep(2)
-            await bot.send(event,"更新部分后,出错停止(部分包括0)")
-    if star_ == 0:
+    if iscontinue == 1:
         async with httpx.AsyncClient(headers={'User-Agent': ua},timeout=5) as client:
             tasks_list = []  
             for i in char_list:
@@ -547,73 +423,74 @@ async def _(bot: Bot,
                 await asyncio.gather(*tasks_list)
             except:
                 pass
-        await bot.send(event,"干员星级录入完毕")
-
-            
-            
-   
-  
-async def request(client, i, j, k, l, type):
-    if type == 0:
-        now = pub_basic
-    if type == 1:
-        now = pub_skin    
-    link_splic = pub_link.format(k,k,l) + now.format(i, j)
-    try: 
-        r = await client.get(link_splic)
-        if r.status_code == 200:
-            if type == 0:     
-                await info_helper_basic.store(i, link_splic, j)
-                logger.info(f"{i}基础立绘{j}录入完毕")    
-            else:
-                await info_helper_skin.store(i, link_splic, j)
-                logger.info(f"{i}皮肤立绘{j}录入完毕")
-    except:
-        pass
-    
-#存储函数     
-async def store(char_list, start, num, type, force):
-    async with httpx.AsyncClient(headers={'User-Agent': ua},timeout=5) as client:
         
-        if type == 0:
-            now = pub_basic
-        if type == 1:
-            now = pub_skin
-        
-        for i in char_list:
-            is_exist = 0
-            if force == 0:
-                if type == 0:
-                    is_exist = await info_helper_basic.is_exist(i)
-                if type == 1:
-                    is_exist = await info_helper_skin.is_exist(i)
+        for name in char_list:
+            is_exist = await info_helper_basic.is_exist(name)
             if is_exist == 1:
                 continue
-            for j in range(start, num):
-                tasks_list = []
-                if j == 2 and i in three_star:
-                    break;
-                for k in range(10):
-                    for l in range(10):
-                        tasks_list.append(request(client, i, j, k, l, type))         
-                for k in range(10):
-                    for l in alphabet_list:
-                        tasks_list.append(request(client, i, j, k, l, type))
+            basic_ = await get_basic(name)
+            for i in range(len(basic_)):
+                await info_helper_basic.store(name, basic_[i], i + 1)
+                logger.info(f"{name}基础立绘{i + 1}录入完毕")
+            
+        for name in char_list:
+            is_exist = await info_helper_skin.is_exist(name)
+            if is_exist == 1:
+                continue            
+            skin_ = await get_skin(name)
+            for i in range(len(skin_)):
+                await info_helper_skin.store(name, skin_[i], i + 1)
+            logger.info(f"{name}皮肤立绘录入完毕")
+    elif msg in char_list:
+        name = msg
+        basic_ = await get_basic(name)
+        for i in range(len(basic_)):
+            await info_helper_basic.store(name, basic_[i], i + 1)
+        logger.info(f"{name}基础立绘录入完毕")
+        skin_ = await get_skin(name)
+        for i in range(len(skin_)):
+            await info_helper_skin.store(name, skin_[i], i + 1)
+        logger.info(f"{name}皮肤立绘录入完毕")
+    elif msg == "刷新所有干员信息":
+        for name in char_list:
+            await info_helper_basic.clear(name)
+            basic_ = await get_basic(name)
+            for i in range(len(basic_)):
+                await info_helper_basic.store(name, basic_[i], i + 1)
+            logger.info(f"{name}基础立绘录入完毕")
+        for name in char_list:           
+            skin_ = await get_skin(name)
+            for i in range(len(skin_)):
+                await info_helper_skin.store(name, skin_[i], i + 1)
+            logger.info(f"{name}皮肤立绘录入完毕")
+    await update_list.finish("录入完毕")  
+async def get_basic(name: str):
+    list_ = []
+    for i in range(1, 3):
+        if i == 2 and name in three_star:
+            break
+        path_ = get_path(f"立绘_{name}_{i}.png")
+        list_.append(path_)
+    return list_
+       
+async def get_skin(name:str):
+    list_ = []
+    for i in range(1, skin_top):
+        path_ = get_path(f"立绘_{name}_skin{i}.png")
+        list_.append(path_)
+    return list_
 
-                for k in alphabet_list:
-                    for l in range(10):
-                        tasks_list.append(request(client, i, j, k, l, type))    
-                        
-                                     
-                for k in alphabet_list:
-                    for l in alphabet_list:
-                        tasks_list.append(request(client, i, j, k, l, type)) 
-                try:
-                    await asyncio.gather(*tasks_list)
-                except:
-                    pass
-            if type == 1:
-                await info_helper_skin.record_none(i, '') 
+def get_avatar(name:str, index_:int):
+    path_ = get_path(f"头像_{name}_skin{index_}.png")
+    if index_ == 0:
+        path_ = get_path(f"头像_{name}.png")
+    return path_
+
+def get_path(path:str):
+    h1 = md5()
+    h1.update(path.encode("utf-8"))
+    md5_ = str(h1.hexdigest())
+    return pub_link.format(md5_[0], md5_[0], md5_[1]) + path
 
 @set_price.handle()
 async def _(bot: Bot,
@@ -683,7 +560,7 @@ async def _(bot: Bot,
             if list_return[1] == 6:
                 six_num += 1
             list_list.append(list_return)
-        msg_id = await draw_char.send(image(b64 = pic2b64(buide_image(list_list))), at_sender = True)
+        msg_id = await draw_char.send(image(b64 = pic2b64(await buide_image(list_list))), at_sender = True)
         try:
             if six_num == 0 and five_num < 3:
                 withdraw_message_manager.withdraw_message(
@@ -735,7 +612,7 @@ async def draw_assist(rand, rand_l, rand_r, star, group, uid, ticket_1, ticket_2
             ticket = ticket_3
         await helper_collect.add_ticket(group, uid, ticket)
         if star == 6:
-            str_ = name + '_' + str(six_record + 1) + ' '
+            str_ = name + '_' + str(six_record) + ' '
             await helper_collect.draw_record_(group, uid ,str_)
             await helper_collect.record_clear(group, uid)
         six_record = await helper_collect.get_six_record(group, uid)      
@@ -768,7 +645,7 @@ async def get_helper_all_pic(name:str):
     list_skin = await info_helper_skin.get_all_url(name)
     if list_basic != 0:
         for i in list_basic:
-            if i != '' and await check_url(i):
+            if i != '':
                 list_select.append(i)
     if list_skin != 0:
         for i in list_skin:
@@ -830,6 +707,8 @@ async def _(bot: Bot,
         
     try:
         pic_url = list_select[list_my[1] - 1]
+        if not await check_url(pic_url):
+            pic_url = list_select[0]
     except:
         pic_url = list_select[0]
         
@@ -1036,7 +915,7 @@ async def _(bot: Bot,
 
             
 
-def buide_image(list_:list):
+async def buide_image(list_:list):
     img_back = Image.new("RGB",(720, 430),(255,255,255))
     fontStyle = ImageFont.truetype(yuanshen_ttf, 12, encoding="utf-8")
     draw = ImageDraw.Draw(img_back)
@@ -1081,7 +960,12 @@ def buide_image(list_:list):
             img = Image.open(avatar_)
             img_back.paste(img, (tmp * 120, 50 + column_ * 210))
         except:
-            pass
+            try:
+                pil = await get_pic_pil(get_avatar(name, 0))
+                img = revise_size_h(pil, 120)
+                img_back.paste(img, (tmp * 120, 50 + column_ * 210))
+            except:
+                pass     
     return img_back
 
 def pic2b64(pic: Image) -> str:
@@ -1185,8 +1069,8 @@ async def build_sign_card(group:int, uid:int):
             url = list_select[index_]
         except:
             url = list_select[0]
-        
     try:
+        url += "?image_process=format,webp/quality,Q_10"
         back = await get_pic_pil(url)
     except:
         back = Image.new('RGBA', (800, 800), (255, 255, 255, 300))
@@ -1207,16 +1091,16 @@ async def build_sign_card(group:int, uid:int):
     
     pinyin = pypinyin.pinyin(name, style=pypinyin.NORMAL)
     pinyin_ = ''
-    for i in pinyin:
-        pinyin_ += i[0]
-    pic = pinyin_ + '.png'
-    avatar = avatar_path
-    avatar_ = str(avatar.absolute()) + '/' + pic
+    skin_index = 0
+    for i in range(1, skin_top):
+        if f"skin{i}" in url:
+            skin_index = i
+            break
     try:
-        avatar_helper = Image.open(avatar_)   
+        pil = await get_pic_pil(get_avatar(name, skin_index))
+        avatar_helper = revise_size_h(pil, 120)
     except:
         avatar_helper =  Image.new('RGBA', (120, 120), (255, 255, 255, 300))
-    
     try:
         text_helper = (await get_record_text(name, "问候"))[2]
     except:
