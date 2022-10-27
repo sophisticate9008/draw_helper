@@ -245,6 +245,7 @@ async def _(bot: Bot,
         guess_voice[group] = {}
         name = random.choice(await get_name_list())
         print(name) #测试用
+        guess_voice[group]["name"] = name
         count = 0
         try:
             list_voice = await get_record_text(name, "随机")
@@ -255,7 +256,6 @@ async def _(bot: Bot,
         if not await check_url(cn_url):
             list_voice.remove(list_voice[0])
         await begin_guess.send(record(random.choice(list_voice)))
-        guess_voice[group]["name"] = name
         guess_voice[group]["time"] = 120
         while count < 120:
             if get_game_status(event):
