@@ -1004,6 +1004,7 @@ async def get_record_text(name, title):
     list_voice = []
     index_count = -1
     for i in texts:
+        index_count += 1
         list_tmp = []
         results = re.search('=(.*)\n.*\|中文\|(.*)}}{{VoiceData/word\|日文\|',i)
         try:
