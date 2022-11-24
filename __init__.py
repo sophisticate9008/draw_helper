@@ -981,8 +981,8 @@ def pic2b64(pic: Image) -> str:
     return "base64://" + base64_str
 
 async def get_record_text(name, title):
-    url_jp = 'https://static.prts.wiki/voice/{}/{}?/filename={}.wav'
-    url_cn = 'https://static.prts.wiki/voice_cn/{}/{}?/filename={}.wav'
+    url_jp = 'https://static.prts.wiki/voice/{}/{}?filename={}.wav'
+    url_cn = 'https://static.prts.wiki/voice_cn/{}/{}?filename={}.wav'
     url_text = 'https://prts.wiki/index.php?title={}/语音记录&action=edit'
     count = 0
     issucceed = 0
