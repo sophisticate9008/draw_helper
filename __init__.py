@@ -1002,18 +1002,14 @@ async def get_record_text(name, title):
     key = re.search('key=(.*)', key_text)
     key = key.groups()[0]    
     list_voice = []
-    index_count = -1
     for i in texts:
-        index_count += 1
         list_tmp = []
         results = re.search('=(.*)\n.*\|中文\|(.*)}}{{VoiceData/word\|日文\|',i)
+        index = re.search('\|语音.=(.*)',i)
         try:
             list_tmp.append(results.groups()[0])
             list_tmp.append(results.groups()[1])
-            if index_count < 10:
-                list_tmp.append(f"CN_00{index_count}.wav")
-            else :
-                list_tmp.append(f"CN_0{index_count}.wav")
+            list_tmp.append(index.groups()[0])
             list_voice.append(list_tmp)
 
         except:
