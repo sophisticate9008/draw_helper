@@ -981,8 +981,8 @@ def pic2b64(pic: Image) -> str:
     return "base64://" + base64_str
 
 async def get_record_text(name, title):
-    url_jp = 'https://static.prts.wiki/voice/{}/{}_{}.wav'
-    url_cn = 'https://static.prts.wiki/voice_cn/{}/{}_{}.wav'
+    url_jp = 'https://static.prts.wiki/voice/{}/{}?/filename={}.wav'
+    url_cn = 'https://static.prts.wiki/voice_cn/{}/{}?/filename={}.wav'
     url_text = 'https://prts.wiki/index.php?title={}/语音记录&action=edit'
     count = 0
     issucceed = 0
@@ -1002,13 +1002,19 @@ async def get_record_text(name, title):
     key = re.search('key=(.*)', key_text)
     key = key.groups()[0]    
     list_voice = []
+    index_count = -1
     for i in texts:
         list_tmp = []
         results = re.search('=(.*)\n.*\|中文\|(.*)}}{{VoiceData/word\|日文\|',i)
         try:
             list_tmp.append(results.groups()[0])
             list_tmp.append(results.groups()[1])
+            if index_count < 10:
+                list_tmp.append(f"CN_00{index_count}.wav")
+            else :
+                list_tmp.append(f"CN_0{index_count}.wav")
             list_voice.append(list_tmp)
+
         except:
             pass
     voice_sel = random.choice(list_voice)       
@@ -1019,8 +1025,9 @@ async def get_record_text(name, title):
     list_return = []    
     voice_title = voice_sel[0]
     voice_text = voice_sel[1]
-    url_voice_jp = url_jp.format(key, name, voice_title)
-    url_voice_cn = url_cn.format(key, name, voice_title)  
+    voice_index = voice_sel[2]
+    url_voice_jp = url_jp.format(key, voice_index, voice_title)
+    url_voice_cn = url_cn.format(key, voice_index, voice_title)  
     list_return.append(url_voice_cn)
     list_return.append(url_voice_jp)
     list_return.append(voice_text)
