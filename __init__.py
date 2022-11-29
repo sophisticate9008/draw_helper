@@ -355,7 +355,7 @@ async def _(
         list_role = await get_all_have(group, uid)
         if args.name in list_role:
             list_voice = await get_record_text(args.name, args.title)
-            if args.longuage == "cn":
+            if "cn" in args.longuage:
                 url_voice = list_voice[0]
                 if await check_url(url_voice):
                     await voice.send(record(url_voice))
