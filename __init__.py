@@ -1005,7 +1005,7 @@ async def get_record_text(name, title):
     for i in texts:
         list_tmp = []
         results = re.search('=(.*)\n.*\|中文\|(.*)}}{{VoiceData/word\|日文\|',i)
-        index = re.search('\|语音.=(.*)',i)
+        index = re.search('\|语音.*=(.*)',i)
         try:
             list_tmp.append(results.groups()[0])
             list_tmp.append(results.groups()[1])
