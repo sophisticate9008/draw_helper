@@ -1,3 +1,4 @@
+
 import asyncio
 import base64
 from io import BytesIO
@@ -22,7 +23,7 @@ from utils.image_utils import text2image
 from configs.config import NICKNAME
 from services.log import logger
 from utils.data_utils import init_rank
-from utils.message_builder import image , at, record, text
+from utils.message_builder import image , at, text
 from nonebot import on_command, on_shell_command, on_message
 from nonebot.typing import T_State
 from utils.utils import is_number
@@ -66,7 +67,7 @@ three_star = ['正义骑士号', "THRM-EX", '斑点', '泡普卡', '月见夜', 
 alphabet_list = ['a','b','c','d','e','f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'l', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
 
-__zx_plugin_name__ = "明日方舟助理"
+__zx_plugin_name__ = "明日方舟干员"
 __plugin_usage__ = """
 usage:
     管理员私聊指令:
@@ -124,16 +125,9 @@ usage:
         23:50后自动消耗天数且不增加黄票
         一天仅可签到一次
 """.strip()
-
-__plugin_superuser_usage__ = """
-usage:
-    更新干员数据 ?干员名字
-    不加名字默认所有,比较慢
-""".strip()
-
 __plugin_des__ = ""
 __plugin_cmd__ = ["抽干员","设置助理", "我的助理", "查看助理所有立绘", "切换立绘[index]", "干员语音", '我的干员',"我的六星记录", '我的黄票','黄票兑换']
-__plugin_type__ = ("群内小游戏")
+__plugin_type__ = ("群内小游戏",)
 __plugin_version__ = 1.0
 __plugin_author__ = "冰蓝色光点"
 __plugin_settings__ = {
@@ -155,9 +149,9 @@ update_list = on_command("更新干员数据", permission=SUPERUSER, priority=5,
 set_price = on_command("设置价格", permission=SUPERUSER, priority=5, block=True)
 draw_char = on_command("抽干员",permission=GROUP, priority=5, block=True)
 my_helper = on_command("我的助理",permission=GROUP, priority=5, block=True)
-check_helper = on_command("查看助理所有立绘",permission=GROUP, priority=5, block=True)
+check_helper = on_command("查看助理所有立绘",aliases={"查看助理全部立绘"},permission=GROUP, priority=5, block=True)
 switch_paint = on_command("切换立绘",permission=GROUP, priority=5, block=True)
-set_helper = on_command("设置助理",permission=GROUP, priority=5, block=True)
+set_helper = on_command("设置助理",aliases={"设置助理为"},permission=GROUP, priority=5, block=True)
 my_char = on_command("我的干员",permission=GROUP, priority=5, block=True)
 my_record = on_command("我的六星记录",permission=GROUP, priority=5, block=True)
 my_ticket = on_command("我的黄票",permission=GROUP, priority=5, block=True)
@@ -208,7 +202,7 @@ async def _(bot: Bot,
         cn_url = list_voice[0]
         if not await check_url(cn_url):
             list_voice.remove(list_voice[0])
-        await command_prompt.send(record(random.choice(list_voice)))
+        await command_prompt.send(await record(random.choice(list_voice)))
         guess_voice[group]["cd"] = 10
         await jishiqi(group)
     
@@ -255,7 +249,7 @@ async def _(bot: Bot,
         cn_url = list_voice[0]
         if not await check_url(cn_url):
             list_voice.remove(list_voice[0])
-        await begin_guess.send(record(random.choice(list_voice)))
+        await begin_guess.send(await record(random.choice(list_voice)))
         guess_voice[group]["time"] = 120
         while count < 120:
             if get_game_status(event):
@@ -342,12 +336,12 @@ async def _(
             if "cn" in args.longuage:
                 url_voice = list_voice[0]
                 if await check_url(url_voice):
-                    await voice.send(record(url_voice))
+                    await voice.send(await record(url_voice))
                     return
                 else:
                     await voice.finish('你当前的助理没有中文语音', at_sender=True)                
             url_voice = list_voice[1] 
-            await voice.send(record(url_voice))
+            await voice.send(await record(url_voice))
             voice_text = list_voice[2]
             await voice.finish(voice_text)                
                 
@@ -355,15 +349,15 @@ async def _(
         list_role = await get_all_have(group, uid)
         if args.name in list_role:
             list_voice = await get_record_text(args.name, args.title)
-            if "cn" in args.longuage:
+            if args.longuage == "cn":
                 url_voice = list_voice[0]
                 if await check_url(url_voice):
-                    await voice.send(record(url_voice))
+                    await voice.send(await record(url_voice))
                     return
                 else:
                     await voice.finish('当前选择的干员没有中文语音', at_sender=True)                
             url_voice = list_voice[1] 
-            await voice.send(record(url_voice))
+            await voice.send(await record(url_voice))
             voice_text = list_voice[2]
             await voice.finish(voice_text)   
         else:
@@ -1014,8 +1008,9 @@ async def get_record_text(name, title):
 
         except:
             pass
-    voice_sel = random.choice(list_voice)       
+    voice_sel = random.choice(list_voice) 
     for i in list_voice:
+        print(i[0])
         if i[0] == title:
             voice_sel = i
             break  
@@ -1028,6 +1023,8 @@ async def get_record_text(name, title):
     list_return.append(url_voice_cn)
     list_return.append(url_voice_jp)
     list_return.append(voice_text)
+    print(url_voice_cn)
+    print(url_voice_jp)
     return list_return
 
 
@@ -1173,6 +1170,9 @@ async def _():
     except:
         logger.info("自动消耗月卡出错")
                 
-    
+async def record(url):
+    resp = await AsyncHttpx.get(url)
+    voice = resp.content
+    return MessageSegment.record(voice)
     
     
