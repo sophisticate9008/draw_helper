@@ -244,7 +244,7 @@ async def _(bot: Bot,
         try:
             list_voice = await get_record_text(name, "随机")
         except:
-            await begin_guess.send("网络问题,请稍后再试")
+            await begin_guess.send("网络问题,请稍后再试或随机到预备干员请立即结束猜语音或者在那几个里面猜")
         list_voice.remove(list_voice[2])
         cn_url = list_voice[0]
         if not await check_url(cn_url):
