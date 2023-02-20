@@ -955,7 +955,7 @@ async def get_pic_pil(url):
 async def build_sign_card(group:int, uid:int):
     list_my = await helper_collect.my(group, uid)
     try:
-        name = await random.choice(get_all_have(group, uid))
+        name = await random.choice(await get_all_have(group, uid))
         list_select = await get_helper_all_pic(name)
         index_ = list_my[1] - 1
         try:
