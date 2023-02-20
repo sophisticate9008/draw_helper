@@ -54,9 +54,9 @@ class helper_collect(Model):
     draw_count = fields.IntField()
     six_record = fields.IntField()#记录保底
     draw_record = fields.CharField(20000, null=True)#记录六星抽卡记录
-    index = fields.IntField()
-    price = fields.IntField()
-    helper = fields.CharField(255, null=True)
+    index = fields.IntField(unique=True)
+    price = fields.IntField(unique=True)
+    helper = fields.CharField(255, null=True, unique=True)
     class Meta:
         table = "helper_collect"
         table_description = "群员抽干员的数据表"
@@ -219,7 +219,7 @@ class moon_card_prts(Model):
     class Meta:
         table = "moon_card_prts"
         table_description = "群员月卡信息"
-        unique_together = ("uid", "group_id")        
+        unique_together = ("user_qq", "uid")        
     @classmethod
     async def get_buy_list(cls, group):
         try:

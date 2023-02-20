@@ -221,7 +221,8 @@ async def _(bot: Bot,
             ):
     global guess_voice
     group = event.group_id
-    price = await helper_collect.get_price(group)
+    uid = event.uid
+    price = await helper_collect.get_price(group,uid)
     if get_game_status(event):
         await begin_guess.finish("已经在进行了")
     else:
@@ -427,7 +428,7 @@ async def _(bot: Bot,
     msg = args.extract_plain_text().strip()
     uid = event.user_id
     group = event.group_id    
-    price = await helper_collect.get_price(group)
+    price = await helper_collect.get_price(group,uid)
     gold_have = await BagUser.get_gold(uid, group)
     star_char = '★'
     if msg != '十连':
@@ -1019,12 +1020,26 @@ async def my_shop_mooncard_prts():
         ** {"multi":50},
     )
     async def sign_gift(user_id: int, group_id: int, multi: int):
-        price = await helper_star.get_price(group_id)
+        price = await helper_star.get_price(group_id,user_id)
         gold_have = await BagUser.get_gold(user_id, group_id)
         if gold_have >= price * multi:   
             await BagUser.spend_gold(user_id, group_id, price * multi)
             await moon_card_prts.buy(group_id, user_id)
-        
+            
+@driver.on_startup
+async def class_raw():
+    try:
+        await helper_collect.raw(
+            "ALTER TABLE helper_collect ADD [index] INT;"
+        )
+        await helper_collect.raw(
+            "ALTER TABLE helper_collect ADD price INT;"
+        )
+        await helper_collect.raw(
+            "ALTER TABLE helper_collect ADD helper CHAR(255);"
+        )
+    except:
+        pass
 @check_in.handle()
 async def _(bot: Bot,
             event: GroupMessageEvent,
