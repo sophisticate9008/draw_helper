@@ -219,7 +219,7 @@ class moon_card_prts(Model):
     class Meta:
         table = "moon_card_prts"
         table_description = "群员月卡信息"
-        unique_together = ("user_qq", "group_id")        
+        unique_together = ("uid", "group_id")        
     @classmethod
     async def get_buy_list(cls, group):
         try:
