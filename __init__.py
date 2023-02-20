@@ -45,26 +45,17 @@ from models.group_member_info import GroupInfoUser
 from utils.utils import is_number,get_message_img, get_message_text
 from models.bag_user import BagUser
 from argparse import Namespace
-from ._model import info_helper_basic, info_helper_skin, helper_intact, helper_star, helper_collect, draw_price, moon_card_prts
+from ._model import helper_star, helper_collect, moon_card_prts
 from lxml import etree
 from .pic_make import pic_make_, revise_size_h
 
 from datetime import datetime, timedelta
 from nonebot.rule import ArgumentParser
 from nonebot.matcher import Matcher
-from hashlib import md5
-path_ = os.path.dirname(__file__)
-path_.replace('\\', '/')
-data_basic = str(path_) + '/basic.txt'
-data_skin = str(path_) + '/skin.txt'
-pub_link = 'https://prts.wiki/images/{}/{}{}/'
-pub_basic = '立绘_{}_{}.png'
-pub_skin = '立绘_{}_skin{}.png'
+
 ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.81 Safari/537.36 Edg/104.0.1293.54'
-skin_top = 7
-three_star = ['正义骑士号', "THRM-EX", '斑点', '泡普卡', '月见夜', '空爆', '梓兰', '史都华德', '安赛尔', '芙蓉', '炎熔', '安德切尔', '克洛丝', '米格鲁', '卡缇', 
-                '玫兰莎', '翎羽', '香草', '芬', '12F', '杜林', '巡林者', '黑角', '夜刀', 'Castle-3', 'Lancet-2']
-alphabet_list = ['a','b','c','d','e','f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'l', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+
+
 
 
 __zx_plugin_name__ = "明日方舟干员"
@@ -142,8 +133,6 @@ helper_par.add_argument("-n", "--name", default="default", help="干员名字,�
 helper_par.add_argument("-x", "--index",type=int, default=1, help="立绘序列,默认为1")
 helper_par.add_argument("-l", "--longuage",default="jp",help="中英文,默认jp, 可选cn")
 helper_par.add_argument("-t", "--title", default="default",help="语音标题,无对应则随机")
-
-
 
 update_list = on_command("更新干员数据", permission=SUPERUSER, priority=5, block=True)
 set_price = on_command("设置价格", permission=SUPERUSER, priority=5, block=True)
@@ -232,7 +221,7 @@ async def _(bot: Bot,
             ):
     global guess_voice
     group = event.group_id
-    price = await draw_price.get_price(group)
+    price = await helper_collect.get_price(group)
     if get_game_status(event):
         await begin_guess.finish("已经在进行了")
     else:
@@ -293,7 +282,7 @@ async def _(
     group = event.group_id
     uid = event.user_id
     if args.name == "default":
-        list_my = await helper_intact.my(group, uid)
+        list_my = await helper_collect.my(group, uid)
         if list_my == 0:
             await voice.finish("你还没有设置助理",at_sender = True)
         else:
@@ -327,7 +316,7 @@ async def _(
     group = event.group_id
     uid = event.user_id
     if args.name == "default":
-        list_my = await helper_intact.my(group, uid)
+        list_my = await helper_collect.my(group, uid)
         if list_my == 0:
             await voice.finish("你还没有设置助理",at_sender = True)
         else:
@@ -367,32 +356,15 @@ async def _(
             
         
 
-@update_list.handle()
-async def _(bot: Bot,
-            event: PrivateMessageEvent,
-            state: T_State,
-            args: Message = CommandArg(),
-            ):
-    msg = args.extract_plain_text().strip()
+async def get_role_list():
     char_list = []
     count_out = 0
-    msg = str(msg)
-    iscontinue = 1
-    if msg in char_list:
-        iscontinue = 0
-    if any(key in msg for key in["新增皮肤","刷新所有干员信息"]):
-        iscontinue = 0
     while (len(char_list) < 250 and count_out < 10):
         role_list = []
         url = 'https://prts.wiki/w/%E5%88%86%E7%B1%BB:%E5%B9%B2%E5%91%98'
         try:
             for i in range(2):
-                
                 r = await AsyncHttpx.get(url=url)
-
-                # t = httpx.request('get',url='http://httpbin.org/get', headers={'User-Agent': ua})
-                # print(t.text)
-
                 parse_html = etree.HTML(r.text)
                 xpath_char='//div[@class="mw-category-group"]/ul/li/a[@title=.]/text()'
                 char_page=parse_html.xpath(xpath_char)
@@ -404,87 +376,30 @@ async def _(bot: Bot,
         except:
             count_out += 1
     if len(char_list) < 250:
-        await update_list.finish("未知错误")
+        await logger.warning("未知错误,请稍后再试")
+        return
+    return char_list
 
-    if iscontinue == 1:
-        async with httpx.AsyncClient(headers={'User-Agent': ua},timeout=5) as client:
-            tasks_list = []  
-            for i in char_list:
-                if await helper_star.is_exist(i):
-                    continue
-                tasks_list.append(get_star(client, i, bot, event))
-            try:
-                await asyncio.gather(*tasks_list)
-            except:
-                pass
-        
-        for name in char_list:
-            is_exist = await info_helper_basic.is_exist(name)
-            if is_exist == 1:
+async def update_star(bot, event):
+    char_list = await get_role_list()
+    async with httpx.AsyncClient(headers={'User-Agent': ua},timeout=5) as client:
+        tasks_list = []  
+        for i in char_list:
+            if await helper_star.is_exist(i):
                 continue
-            basic_ = await get_basic(name)
-            for i in range(len(basic_)):
-                await info_helper_basic.store(name, basic_[i], i + 1)
-                logger.info(f"{name}基础立绘{i + 1}录入完毕")
-            
-        for name in char_list:
-            is_exist = await info_helper_skin.is_exist(name)
-            if is_exist == 1:
-                continue            
-            skin_ = await get_skin(name)
-            for i in range(len(skin_)):
-                await info_helper_skin.store(name, skin_[i], i + 1)
-            logger.info(f"{name}皮肤立绘录入完毕")
-    elif msg in char_list:
-        name = msg
-        basic_ = await get_basic(name)
-        for i in range(len(basic_)):
-            await info_helper_basic.store(name, basic_[i], i + 1)
-        logger.info(f"{name}基础立绘录入完毕")
-        skin_ = await get_skin(name)
-        for i in range(len(skin_)):
-            await info_helper_skin.store(name, skin_[i], i + 1)
-        logger.info(f"{name}皮肤立绘录入完毕")
-    elif msg == "刷新所有干员信息":
-        for name in char_list:
-            await info_helper_basic.clear(name)
-            basic_ = await get_basic(name)
-            for i in range(len(basic_)):
-                await info_helper_basic.store(name, basic_[i], i + 1)
-            logger.info(f"{name}基础立绘录入完毕")
-        for name in char_list:           
-            skin_ = await get_skin(name)
-            for i in range(len(skin_)):
-                await info_helper_skin.store(name, skin_[i], i + 1)
-            logger.info(f"{name}皮肤立绘录入完毕")
-    await update_list.finish("录入完毕")  
-async def get_basic(name: str):
-    list_ = []
-    for i in range(1, 3):
-        if i == 2 and name in three_star:
-            break
-        path_ = get_path(f"立绘_{name}_{i}.png")
-        list_.append(path_)
-    return list_
-       
-async def get_skin(name:str):
-    list_ = []
-    for i in range(1, skin_top):
-        path_ = get_path(f"立绘_{name}_skin{i}.png")
-        list_.append(path_)
-    return list_
+            tasks_list.append(get_star(client, i, bot, event))
+        try:
+            await asyncio.gather(*tasks_list)
+        except:
+            pass
 
-def get_avatar(name:str, index_:int):
-    path_ = get_path(f"头像_{name}_skin{index_}.png")
-    if index_ == 0:
-        path_ = get_path(f"头像_{name}.png")
-    return path_
-
-def get_path(path:str):
-    h1 = md5()
-    h1.update(path.encode("utf-8"))
-    md5_ = str(h1.hexdigest())
-    return pub_link.format(md5_[0], md5_[0], md5_[1]) + path
+@update_list.handle()
+async def _(bot: Bot,
+            event: PrivateMessageEvent,
+            state: T_State,
+            args: Message = CommandArg(),
+            ):
+    await update_star(bot, event)
 
 @set_price.handle()
 async def _(bot: Bot,
@@ -498,7 +413,7 @@ async def _(bot: Bot,
         if len(msg_) == 2:
             group = int(msg_[0])
             price = int(msg_[1])
-            await draw_price.set_price(group,price)
+            await helper_collect.set_price(group,price)
             await set_price.finish("设置成功")
     except:
         pass
@@ -512,7 +427,7 @@ async def _(bot: Bot,
     msg = args.extract_plain_text().strip()
     uid = event.user_id
     group = event.group_id    
-    price = await draw_price.get_price(group)
+    price = await helper_collect.get_price(group)
     gold_have = await BagUser.get_gold(uid, group)
     star_char = '★'
     if msg != '十连':
@@ -525,7 +440,7 @@ async def _(bot: Bot,
         count_ = list_return[2] + 1
         ticket = list_return[3]
         no_six = list_return[4]
-        pic_url = await info_helper_basic.get_url(name)
+        pic_url = await helper_star.get_url_basic(name)
         msg_tuple = (f'你本次抽到的干员为{name}', image(pic_url), f"稀有度为{star_str}\n已经抽到次数为{count_}\n本次获得黄票数量为{ticket}\n累计{no_six}没有获得六星")
         msg_id = await draw_char.send(Message(msg_tuple), at_sender=True)
         try:
@@ -621,7 +536,7 @@ async def draw_assist(rand, rand_l, rand_r, star, group, uid, ticket_1, ticket_2
         return False
                 
 async def get_name_list():
-    query = await info_helper_basic.get_all_name()
+    query = await helper_star.get_all_name()
     all_name = [id.name for id in query]
     return all_name
 
@@ -634,17 +549,7 @@ async def check_url(url):
         return False
 
 async def get_helper_all_pic(name:str):
-    list_select = []
-    list_basic = await info_helper_basic.get_all_url(name)
-    list_skin = await info_helper_skin.get_all_url(name)
-    if list_basic != 0:
-        for i in list_basic:
-            if i != '':
-                list_select.append(i)
-    if list_skin != 0:
-        for i in list_skin:
-            if i != '':
-                list_select.append(i)
+    list_select = await helper_star.get_all_url(name)
     return list_select        
 
 #设置助理
@@ -662,9 +567,9 @@ async def _(bot: Bot,
     if list_return:         
         if msg in list_return:
             name = msg
-            pic_url = await info_helper_basic.get_url(name)
+            pic_url = await helper_star.get_url(name)
             msg_tuple = (f'你的助理已经设置为{name}', image(pic_url))
-            await helper_intact.draw(group, uid, name)    
+            await helper_collect.set_helper(group, uid, name)    
             await set_helper.finish(Message(msg_tuple), at_sender=True)
         else:
             await set_helper.finish("你还没抽到该干员,不能设置该助理",at_sender = True)            
@@ -693,7 +598,7 @@ async def _(bot: Bot,
     uid = event.user_id
     group = event.group_id
     
-    list_my = await helper_intact.my(group, uid)
+    list_my = await helper_collect.my(group, uid)
     if list_my == 0:
         await my_helper.finish("你还没有设置助理",at_sender = True)
     else:
@@ -719,7 +624,7 @@ async def _(bot: Bot,
             ):
     uid = event.user_id
     group = event.group_id
-    list_my = await helper_intact.my(group, uid)
+    list_my = await helper_collect.my(group, uid)
     if list_my == 0:
         await my_helper.finish("你还没有设置助理",at_sender = True)
     else:
@@ -746,7 +651,7 @@ async def _(bot: Bot,
     uid = event.user_id
     group = event.group_id
     msg = args.extract_plain_text().strip()
-    list_my = await helper_intact.my(group, uid)
+    list_my = await helper_collect.my(group, uid)
     if list_my == 0:
         await my_helper.finish("你还没有设置助理",at_sender = True)
     else:
@@ -755,7 +660,7 @@ async def _(bot: Bot,
     if is_number(msg):
         index = int(msg)
         if index >= 1 and index <= pic_num:
-            await helper_intact.select(group, uid, index)
+            await helper_collect.select(group, uid, index)
             await switch_paint.finish(f'默认立绘已经切换为{index}号立绘',at_sender = True)
         else:
             await switch_paint.finish('超出索引值', at_sender = True)
@@ -779,18 +684,7 @@ async def get_star(client, name:str, bot, event):
         logger.warning(f"{name}星级录入出错,跳过")
         await bot.send(event, f"{name}录入星级出错跳过")
 
-async def get_new_skin():
-    url = 'https://prts.wiki/w/%E9%A6%96%E9%A1%B5' 
 
-    try:
-        r = AsyncHttpx.get(url=url)
-        parse_html = etree.HTML(r.text)
-        xpath_char = '(//div/i[@class="fa-tshirt fas"])[1]/../..//a/@title'
-        list_return = parse_html.xpath(xpath_char)
-        return list_return
-    except:
-        return False
-    
 async def get_new_role():
     url = 'https://prts.wiki/w/%E9%A6%96%E9%A1%B5' 
 
@@ -1058,18 +952,18 @@ async def get_pic_pil(url):
     return pil_return
 
 async def build_sign_card(group:int, uid:int):
-    list_my = await helper_intact.my(group, uid)
-    if list_my == 0:
-        name = 'none'
-        url = 'none'
-    else:
-        name = list_my[0]
+    list_my = await helper_collect.my(group, uid)
+    try:
+        name = await random.choice(get_all_have(group, uid))
         list_select = await get_helper_all_pic(name)
         index_ = list_my[1] - 1
         try:
             url = list_select[index_]
         except:
             url = list_select[0]
+    except:
+        name = 'none'
+        url = 'none'
     try:
         url += "?image_process=format,webp/quality,Q_10"
         back = await get_pic_pil(url)
@@ -1093,7 +987,7 @@ async def build_sign_card(group:int, uid:int):
     pinyin = pypinyin.pinyin(name, style=pypinyin.NORMAL)
     pinyin_ = ''
     skin_index = 0
-    for i in range(1, skin_top):
+    for i in range(1, 7):
         if f"skin{i}" in url:
             skin_index = i
             break
@@ -1117,7 +1011,7 @@ async def my_shop_mooncard_prts():
     @shop_register(
         name="黄票月卡",
         price=30,
-        des="购买后使用将耗费抽卡金额的50倍增加30天月卡，发送签到触发月卡",
+        des="购买后使用将耗费抽卡金额的50倍增加30天月卡,发送签到触发月卡",
         load_status=True,
         daily_limit=1,
         is_passive=False,
@@ -1125,7 +1019,7 @@ async def my_shop_mooncard_prts():
         ** {"multi":50},
     )
     async def sign_gift(user_id: int, group_id: int, multi: int):
-        price = await draw_price.get_price(group_id)
+        price = await helper_star.get_price(group_id)
         gold_have = await BagUser.get_gold(user_id, group_id)
         if gold_have >= price * multi:   
             await BagUser.spend_gold(user_id, group_id, price * multi)
@@ -1174,5 +1068,19 @@ async def record(url):
     resp = await AsyncHttpx.get(url)
     voice = resp.content
     return MessageSegment.record(voice)
-    
-    
+
+
+from hashlib import md5
+pub_link = 'https://prts.wiki/images/{}/{}{}/'
+
+def get_avatar(name:str, index_:int):
+    path_ = get_path(f"头像_{name}_skin{index_}.png")
+    if index_ == 0:
+        path_ = get_path(f"头像_{name}.png")
+    return path_
+
+def get_path(path:str):
+    h1 = md5()
+    h1.update(path.encode("utf-8"))
+    md5_ = str(h1.hexdigest())
+    return pub_link.format(md5_[0], md5_[0], md5_[1]) + path
