@@ -37,7 +37,7 @@ class helper_star(Model):
         else:
             return False 
     @classmethod
-    async def get_all_url(name):
+    async def get_all_url(cls, name):
         list_ = []
         list_.extend(get_basic(name))
         list_.extend(get_skin(name))
@@ -54,7 +54,7 @@ class helper_collect(Model):
     draw_count = fields.IntField()
     six_record = fields.IntField()#记录保底
     draw_record = fields.CharField(20000, null=True)#记录六星抽卡记录
-    index = fields.IntField(unique=True)
+    index_ = fields.IntField(unique=True)
     price = fields.IntField(unique=True)
     helper = fields.CharField(255, null=True, unique=True)
     class Meta:
@@ -80,15 +80,15 @@ class helper_collect(Model):
         if me := await cls.get_or_none(group_id=group_id, uid=uid):
             list_info = []
             list_info.append(me.helper)
-            list_info.append(me.index)
+            list_info.append(me.index_)
             return list_info
         else:
             return 0
 
     @classmethod
-    async def select(cls, group_id, uid, index):
+    async def select(cls, group_id, uid, index_):
         if me := await cls.get_or_none(group_id=group_id, uid=uid):
-            me.index = index
+            me.index_ = index_
             await me.save()
     @classmethod
     async def set_helper(cls, group_id, uid, helper):
@@ -121,7 +121,7 @@ class helper_collect(Model):
             me.draw_count = me.draw_count + 1      
             me.six_record = me.six_record + 1
         else:
-            await cls.create(group_id=group, uid=uid, name=name_create, ticket=0, draw_count=1, six_record=1, draw_record='', index=1, price=10, helper='')
+            await cls.create(group_id=group, uid=uid, name=name_create, ticket=0, draw_count=1, six_record=1, draw_record='', index_=1, price=10, helper='')
     @classmethod
     async def get_num(cls, group, uid, name):
         if me := await cls.get_or_none(group_id=group, uid=uid):
@@ -131,8 +131,9 @@ class helper_collect(Model):
                 list_ = i.split('_')
                 if name == list_[0]:
                     return int(list_[1])
+            return 0
         else:
-            return False
+            return 0
     @classmethod
     async def get_all_num(cls, group, uid):
         if me := await cls.get_or_none(group_id=group, uid=uid):
@@ -206,7 +207,16 @@ class helper_collect(Model):
             
             return list_return
         else:
-            return False      
+            return False   
+    @classmethod
+    async def _run_script(cls):
+        try:
+            await cls.raw("ALTER TABLE helper_collect ADD index_ INT DEFAULT 1;")   
+            await cls.raw("ALTER TABLE helper_collect ADD price INT DEFAULT 10;")
+            await cls.raw("ALTER TABLE helper_collect ADD helper varchar(255) DEFAULT '';")
+            print("添加字段 index_ price helper")
+        except:
+            pass
 
 class moon_card_prts(Model):   
 
@@ -214,7 +224,7 @@ class moon_card_prts(Model):
     group_id = fields.BigIntField(null=True)
     uid = fields.BigIntField()
     rest_day = fields.IntField()
-    time_last = fields.IntField()
+    time_last = fields.CharField(255)
     
     class Meta:
         table = "moon_card_prts"
@@ -234,7 +244,7 @@ class moon_card_prts(Model):
             me.rest_day += 30
             await me.save()
         else:
-            await cls.create(group_id = group, uid = uid, rest_day = 30, time_last = '0')
+            await cls.create(group_id = group, uid = uid, rest_day = 30, time_last = 0)
     @classmethod    
     async def get_rest_day(cls, group, uid):
 
@@ -285,9 +295,9 @@ def get_skin(name:str):
         list_.append(path_)
     return list_
 
-def get_avatar(name:str, index_:int):
-    path_ = get_path(f"头像_{name}_skin{index_}.png")
-    if index_ == 0:
+def get_avatar(name:str, index__:int):
+    path_ = get_path(f"头像_{name}_skin{index__}.png")
+    if index__ == 0:
         path_ = get_path(f"头像_{name}.png")
     return path_
 

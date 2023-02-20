@@ -246,7 +246,7 @@ async def _(bot: Bot,
                 count += 1
                 if guess_voice[group].get("win_uid"):
                     uid = guess_voice[group]["win_uid"]
-                    winner = (await GroupInfoUser.get_member_info(uid, group)).user_name
+                    winner = await GroupInfoUser.get_user_nickname(uid, group)
                     await BagUser.add_gold(uid, group, price * 3)
                     gold = price * 3
                     guess_voice[group] = {}
@@ -441,7 +441,7 @@ async def _(bot: Bot,
         count_ = list_return[2] + 1
         ticket = list_return[3]
         no_six = list_return[4]
-        pic_url = await helper_star.get_url_basic(name)
+        pic_url = (await helper_star.get_all_url(name))[0]
         msg_tuple = (f'你本次抽到的干员为{name}', image(pic_url), f"稀有度为{star_str}\n已经抽到次数为{count_}\n本次获得黄票数量为{ticket}\n累计{no_six}没有获得六星")
         msg_id = await draw_char.send(Message(msg_tuple), at_sender=True)
         try:
@@ -459,7 +459,7 @@ async def _(bot: Bot,
         if gold_have < price_:
             await draw_char.finish(f"你的金币不够,十抽抽价格为{price_}金币", at_sender = True)
         msg_list = []
-        player = (await GroupInfoUser.get_member_info(uid, group)).user_name
+        player = await GroupInfoUser.get_user_nickname(uid, group)
         list_list = []
         six_num = 0
         five_num = 0
@@ -549,7 +549,7 @@ async def check_url(url):
     else:
         return False
 
-async def get_helper_all_pic(name:str):
+async def get_helper_all_pic(name):
     list_select = await helper_star.get_all_url(name)
     return list_select        
 
@@ -568,7 +568,7 @@ async def _(bot: Bot,
     if list_return:         
         if msg in list_return:
             name = msg
-            pic_url = await helper_star.get_url(name)
+            pic_url = (await helper_star.get_all_url(name))[0]
             msg_tuple = (f'你的助理已经设置为{name}', image(pic_url))
             await helper_collect.set_helper(group, uid, name)    
             await set_helper.finish(Message(msg_tuple), at_sender=True)
@@ -631,7 +631,7 @@ async def _(bot: Bot,
     else:
         list_select = await get_helper_all_pic(list_my[0])
     pic_num = len(list_select)  
-    player = (await GroupInfoUser.get_member_info(uid, group)).user_name
+    player = await GroupInfoUser.get_user_nickname(uid, group)
        
     msg_list = [f"{player}当前的助理为{list_my[0]}"]
     msg_list.append(f'以下为所有立绘') 
@@ -716,7 +716,7 @@ async def _(bot: Bot,
     list_return = await helper_collect.get_all_num(group, uid)
     chaifen = int(len(list_return) / 30) + 1
     msg_list = []
-    player = (await GroupInfoUser.get_member_info(uid, group)).user_name
+    player = await GroupInfoUser.get_user_nickname(uid, group)
     msg_list.append(f'此为{player}的干员情况')
     draw_count = await helper_collect.get_count(group, uid)
     msg_list.append(f'共抽了{draw_count}抽')
@@ -746,7 +746,7 @@ async def _(bot: Bot,
     list_return = await helper_collect.get_record(group, uid)
     chaifen = int(len(list_return) / 30) + 1
     msg_list = []
-    player = (await GroupInfoUser.get_member_info(uid, group)).user_name
+    player = await GroupInfoUser.get_user_nickname(uid, group)
     msg_list.append(f'此为{player}的六星记录')
     
     for i in range(chaifen - 1, -1, -1):
@@ -978,7 +978,7 @@ async def build_sign_card(group:int, uid:int):
         box = (back.size[0] / 4, back.size[0] / 4, back.size[0] / 4 * 3, back.size[1] / 4 * 2)
         back = back.filter(ImageFilter.GaussianBlur(radius=18)) #高斯模糊
         back = back.crop(box) #剪裁
-    nickname = (await GroupInfoUser.get_member_info(uid, group)).user_name
+    nickname = await GroupInfoUser.get_user_nickname(uid, group)
     qq_avatar_url = f"http://q1.qlogo.cn/g?b=qq&nk={uid}&s=640"
     try:
         qq_avatar = await get_pic_pil(qq_avatar_url)
@@ -1009,6 +1009,7 @@ async def build_sign_card(group:int, uid:int):
 use = require("use")
 @driver.on_startup
 async def my_shop_mooncard_prts():
+    await helper_collect._run_script()
     @shop_register(
         name="黄票月卡",
         price=30,
@@ -1020,26 +1021,13 @@ async def my_shop_mooncard_prts():
         ** {"multi":50},
     )
     async def sign_gift(user_id: int, group_id: int, multi: int):
-        price = await helper_star.get_price(group_id,user_id)
+        price = await helper_collect.get_price(group_id,user_id)
         gold_have = await BagUser.get_gold(user_id, group_id)
         if gold_have >= price * multi:   
             await BagUser.spend_gold(user_id, group_id, price * multi)
             await moon_card_prts.buy(group_id, user_id)
-            
-@driver.on_startup
-async def class_raw():
-    try:
-        await helper_collect.raw(
-            "ALTER TABLE helper_collect ADD [index] INT;"
-        )
-        await helper_collect.raw(
-            "ALTER TABLE helper_collect ADD price INT;"
-        )
-        await helper_collect.raw(
-            "ALTER TABLE helper_collect ADD helper CHAR(255);"
-        )
-    except:
-        pass
+
+    
 @check_in.handle()
 async def _(bot: Bot,
             event: GroupMessageEvent,
@@ -1076,6 +1064,7 @@ async def _():
             if i.rest_day > 0:
                 if i.time_last != str(datetime.now().date()):
                     await moon_card_prts.check_in(i.group_id, i.uid, str(datetime.now().date()))
+        await update_star(Bot, GroupMessageEvent)
     except:
         logger.info("自动消耗月卡出错")
                 
