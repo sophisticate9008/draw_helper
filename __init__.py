@@ -62,9 +62,7 @@ __zx_plugin_name__ = "明日方舟干员"
 __plugin_usage__ = """
 usage:
     管理员私聊指令:
-        更新干员数据（用于第一次载入,长时间没更新也可以用这个大量更新）
-        更新干员数据 name(用于补全空缺和新增干员)
-        更新干员数据 新增皮肤(会自动更新新增的皮肤)
+        更新干员数据
         设置价格 群号 价格(默认10一抽,请根据群内金币膨胀情况设置)
     抽干员:
         单抽才有立绘
@@ -401,6 +399,7 @@ async def _(bot: Bot,
             args: Message = CommandArg(),
             ):
     await update_star(bot, event)
+    await update_star.finish("更新完成")
 
 @set_price.handle()
 async def _(bot: Bot,
