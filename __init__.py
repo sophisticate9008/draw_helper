@@ -1051,7 +1051,7 @@ async def _(bot: Bot,
     a = datetime.now().date()
     b = str(a)
     if await moon_card_prts.get_rest_day(group, uid) > 0:
-        if b == await moon_card_prts.get_time(group, uid):
+        if b != await moon_card_prts.get_time(group, uid):
             await helper_collect.add_ticket(group, uid, 6)
             await moon_card_prts.check_in(group, uid, b)
             try:
