@@ -401,7 +401,7 @@ async def _(bot: Bot,
             args: Message = CommandArg(),
             ):
     await update_star(bot, event)
-
+    await update_list.finish('更新完成')
 @set_price.handle()
 async def _(bot: Bot,
             event: PrivateMessageEvent,
