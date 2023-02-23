@@ -42,6 +42,9 @@ class helper_star(Model):
         list_.extend(get_basic(name))
         list_.extend(get_skin(name))
         return list_
+    @classmethod
+    async def get_all_name(cls):
+        return cls.all()
         
     
                 
