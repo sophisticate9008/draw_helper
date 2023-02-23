@@ -219,7 +219,7 @@ async def _(bot: Bot,
             ):
     global guess_voice
     group = event.group_id
-    uid = event.uid
+    uid = event.user_id
     price = await helper_collect.get_price(group,uid)
     if get_game_status(event):
         await begin_guess.finish("已经在进行了")
