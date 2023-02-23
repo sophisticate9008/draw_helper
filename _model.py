@@ -83,7 +83,11 @@ class helper_collect(Model):
         if me := await cls.get_or_none(group_id=group_id, uid=uid):
             list_info = []
             list_info.append(me.helper)
-            list_info.append(me.index_)
+            if me.index_:
+            
+                list_info.append(me.index_)
+            else:
+                list_info.append(1)
             return list_info
         else:
             return 0

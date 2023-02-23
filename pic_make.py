@@ -106,9 +106,9 @@ def round_corner(back: Image, r:int):
     return back
 
 def pic_make_(back, avatar_helper, avatar_qq, nickname, day_rest, ticket_num, text_helper):
-    back = revise_size_width(back, 800)
-    back_ = Image.new('RGBA',(800,400),(255,255,255,300))
-    back = back_.paste(back, (0,0), mask=back)
+    back_ = revise_size_width(back, 800)
+    back = Image.new('RGBA',(800,400),(255,255,255,255))
+    back.paste(back_, (0,0), mask=back_)
     
 
     logo_ = Image.open(res + '明日方舟.png')

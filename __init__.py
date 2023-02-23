@@ -62,7 +62,9 @@ __zx_plugin_name__ = "明日方舟干员"
 __plugin_usage__ = """
 usage:
     管理员私聊指令:
-        更新干员数据
+        更新干员数据（用于第一次载入,长时间没更新也可以用这个大量更新）
+        更新干员数据 name(用于补全空缺和新增干员)
+        更新干员数据 新增皮肤(会自动更新新增的皮肤)
         设置价格 群号 价格(默认10一抽,请根据群内金币膨胀情况设置)
     抽干员:
         单抽才有立绘
@@ -399,7 +401,6 @@ async def _(bot: Bot,
             args: Message = CommandArg(),
             ):
     await update_star(bot, event)
-    await update_star.finish("更新完成")
 
 @set_price.handle()
 async def _(bot: Bot,
@@ -953,21 +954,27 @@ async def get_pic_pil(url):
 
 async def build_sign_card(group:int, uid:int):
     list_my = await helper_collect.my(group, uid)
+    print(list_my)
     try:
         name = random.choice(await get_all_have(group, uid))
+        print(name)
         list_select = await get_helper_all_pic(name)
         index_ = list_my[1] - 1
         try:
             url = list_select[index_]
         except:
             url = list_select[0]
-    except:
+    except Exception as e:
+        logger.warning('966')
+        logger.warning(e)
         name = 'none'
         url = 'none'
     try:
         url += "?image_process=format,webp/quality,Q_10"
         back = await get_pic_pil(url)
-    except:
+    except Exception as e:
+        logger.warning('974')
+        logger.warning(e)
         back = Image.new('RGBA', (800, 800), (255, 255, 255, 300))
     if '_1' in url:
         box = (back.size[0] / 4, 0, back.size[0] / 4 * 3, back.size[1] / 4) #剪裁参数
@@ -981,7 +988,9 @@ async def build_sign_card(group:int, uid:int):
     qq_avatar_url = f"http://q1.qlogo.cn/g?b=qq&nk={uid}&s=640"
     try:
         qq_avatar = await get_pic_pil(qq_avatar_url)
-    except:
+    except Exception as e:
+        logger.warning('990')
+        logger.warning(e)
         qq_avatar = Image.new('RGBA', (640, 640), (255, 255, 255, 300))
     
     pinyin = pypinyin.pinyin(name, style=pypinyin.NORMAL)
@@ -994,11 +1003,15 @@ async def build_sign_card(group:int, uid:int):
     try:
         pil = await get_pic_pil(get_avatar(name, skin_index))
         avatar_helper = revise_size_h(pil, 120)
-    except:
+    except Exception as e:
+        logger.warning('1004')
+        logger.warning(e)
         avatar_helper =  Image.new('RGBA', (120, 120), (255, 255, 255, 300))
     try:
         text_helper = (await get_record_text(name, "问候"))[2]
-    except:
+    except Exception as e:
+        logger.warning('1011')
+        logger.warning(e)
         text_helper = '博士，早上好'
     ticket_num = await helper_collect.get_ticket(group, uid)   
     rest_day = await moon_card_prts.get_rest_day(group, uid)
@@ -1038,14 +1051,16 @@ async def _(bot: Bot,
     a = datetime.now().date()
     b = str(a)
     if await moon_card_prts.get_rest_day(group, uid) > 0:
-        if b != await moon_card_prts.get_time(group, uid):
+        if b == await moon_card_prts.get_time(group, uid):
             await helper_collect.add_ticket(group, uid, 6)
             await moon_card_prts.check_in(group, uid, b)
             try:
                 sign_card = await build_sign_card(group, uid)
-            except:
+            except Exception as e:
+                print(e)
                 await check_in.finish("已签到,但图片出错",at_sender=True)
             await check_in.send(image(b64 = pic2b64(sign_card)), at_sender = True)
+            
 
    
 @scheduler.scheduled_job(
