@@ -127,6 +127,7 @@ class helper_collect(Model):
             me.name = info_str_
             me.draw_count = me.draw_count + 1      
             me.six_record = me.six_record + 1
+            await me.save()
         else:
             await cls.create(group_id=group, uid=uid, name=name_create, ticket=0, draw_count=1, six_record=1, draw_record='', index_=1, price=10, helper='')
     @classmethod
