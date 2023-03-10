@@ -244,7 +244,10 @@ async def _(bot: Bot,
                 count += 1
                 if guess_voice[group].get("win_uid"):
                     uid = guess_voice[group]["win_uid"]
-                    winner = await GroupInfoUser.get_user_nickname(uid, group)
+                    if user := await GroupInfoUser.get_or_none(user_qq=uid, group_id=group):
+                        winner = user.user_name
+                    else:
+                        winner = ''
                     await BagUser.add_gold(uid, group, price * 3)
                     gold = price * 3
                     guess_voice[group] = {}
@@ -628,9 +631,11 @@ async def _(bot: Bot,
         await my_helper.finish("你还没有设置助理",at_sender = True)
     else:
         list_select = await get_helper_all_pic(list_my[0])
-    pic_num = len(list_select)  
-    player = await GroupInfoUser.get_user_nickname(uid, group)
-       
+    pic_num = len(list_select)
+    if user := await GroupInfoUser.get_or_none(user_qq=uid, group_id=group):
+        player = user.user_name
+    else:
+        player = ''   
     msg_list = [f"{player}当前的助理为{list_my[0]}"]
     msg_list.append(f'以下为所有立绘') 
     for i in range(pic_num):
@@ -714,7 +719,10 @@ async def _(bot: Bot,
     list_return = await helper_collect.get_all_num(group, uid)
     chaifen = int(len(list_return) / 30) + 1
     msg_list = []
-    player = await GroupInfoUser.get_user_nickname(uid, group)
+    if user := await GroupInfoUser.get_or_none(user_qq=uid, group_id=group):
+        player = user.user_name
+    else:
+        player = ''
     msg_list.append(f'此为{player}的干员情况')
     draw_count = await helper_collect.get_count(group, uid)
     msg_list.append(f'共抽了{draw_count}抽')
@@ -744,7 +752,10 @@ async def _(bot: Bot,
     list_return = await helper_collect.get_record(group, uid)
     chaifen = int(len(list_return) / 30) + 1
     msg_list = []
-    player = await GroupInfoUser.get_user_nickname(uid, group)
+    if user := await GroupInfoUser.get_or_none(user_qq=uid, group_id=group):
+        player = user.user_name
+    else:
+        player = ''   
     msg_list.append(f'此为{player}的六星记录')
     
     for i in range(chaifen - 1, -1, -1):
@@ -982,7 +993,10 @@ async def build_sign_card(group:int, uid:int):
         box = (back.size[0] / 4, back.size[0] / 4, back.size[0] / 4 * 3, back.size[1] / 4 * 2)
         back = back.filter(ImageFilter.GaussianBlur(radius=18)) #高斯模糊
         back = back.crop(box) #剪裁
-    nickname = await GroupInfoUser.get_user_nickname(uid, group)
+    if user := await GroupInfoUser.get_or_none(user_qq=uid, group_id=group):
+        nickname = user.user_name
+    else:
+        nickname = ''   
     qq_avatar_url = f"http://q1.qlogo.cn/g?b=qq&nk={uid}&s=640"
     try:
         qq_avatar = await get_pic_pil(qq_avatar_url)
