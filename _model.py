@@ -57,8 +57,8 @@ class helper_collect(Model):
     draw_count = fields.IntField()
     six_record = fields.IntField()#记录保底
     draw_record = fields.CharField(20000, null=True)#记录六星抽卡记录
-    index_ = fields.IntField(unique=True)
-    price = fields.IntField(unique=True)
+    index_ = fields.IntField()
+    price = fields.IntField()
     helper = fields.CharField(255, null=True, unique=True)
     class Meta:
         table = "helper_collect"
