@@ -59,7 +59,7 @@ class helper_collect(Model):
     draw_record = fields.CharField(20000, null=True)#记录六星抽卡记录
     index_ = fields.IntField()
     price = fields.IntField()
-    helper = fields.CharField(255, null=True, unique=True)
+    helper = fields.CharField(255, null=True)
     class Meta:
         table = "helper_collect"
         table_description = "群员抽干员的数据表"
