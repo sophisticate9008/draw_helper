@@ -282,7 +282,7 @@ class moon_card_prts(Model):
             return str(datetime.now().date())       
 
 
-pub_link = 'https://prts.wiki/images/{}/{}{}/'
+pub_link = 'https://media.prts.wiki/{}/{}{}/'
 skin_top = 7
 three_star = ['正义骑士号', "THRM-EX", '斑点', '泡普卡', '月见夜', '空爆', '梓兰', '史都华德', '安赛尔', '芙蓉', '炎熔', '安德切尔', '克洛丝', '米格鲁', '卡缇', 
                 '玫兰莎', '翎羽', '香草', '芬', '12F', '杜林', '巡林者', '黑角', '夜刀', 'Castle-3', 'Lancet-2']
