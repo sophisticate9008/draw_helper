@@ -45,7 +45,7 @@ from models.group_member_info import GroupInfoUser
 from utils.utils import is_number,get_message_img, get_message_text
 from models.bag_user import BagUser
 from argparse import Namespace
-from ._model import helper_star, helper_collect, moon_card_prts
+from ._model import helper_star, helper_collect, moon_card_prts, get_avatar
 from lxml import etree
 from .pic_make import pic_make_, revise_size_h
 
@@ -1100,18 +1100,3 @@ async def record(url):
     voice = resp.content
     return MessageSegment.record(voice)
 
-
-from hashlib import md5
-pub_link = 'https://prts.wiki/images/{}/{}{}/'
-
-def get_avatar(name:str, index_:int):
-    path_ = get_path(f"头像_{name}_skin{index_}.png")
-    if index_ == 0:
-        path_ = get_path(f"头像_{name}.png")
-    return path_
-
-def get_path(path:str):
-    h1 = md5()
-    h1.update(path.encode("utf-8"))
-    md5_ = str(h1.hexdigest())
-    return pub_link.format(md5_[0], md5_[0], md5_[1]) + path
